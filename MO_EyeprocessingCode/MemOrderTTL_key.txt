@@ -1,0 +1,35 @@
+Mem Order TTL key
+
+% in .txt file 
+61 = task onset
+11 = fixation cross
+1 = clip onset
+2 = clip offset
+3 = question (probe) number
+4 = response
+60 = task offset
+0 = after TTL delay (in seconds)
+
+% for A00 Encoding: in .mat file, column 'respValue'
+-3 = NO, SURE	
+-2 =NO, LESS SURE
+-1 = NO, VERY UNSURE
+1= YES, VERY UNSURE
+2= YES, LESS SURE
+3= YES, SURE
+
+% for B00 SceneRecog: in .mat file, column 'respValue'
+-3 = OLD, SURE	
+-2 =OLD, LESS SURE
+-1 = OLD, VERY UNSURE
+1= NEW, VERY UNSURE
+2= NEW, LESS SURE
+3= NEW, SURE
+
+% for C00 TimeDiscrimination: in .mat file, column 'respValue'
+-3 =LEFT, SURE	
+-2 = LEFT, LESS SURE
+-1 = LEFT, VERY UNSURE
+1= RIGHT, VERY UNSURE
+2= RIGHT, LESS SURE
+3= RIGHT, SURE
