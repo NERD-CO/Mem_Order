@@ -102,6 +102,11 @@ classdef memOrder < handle
                 %% Load the data
                 tmp = nwbRead(obj.(matchedNames{ii}).nwb_fname);
 
+                %% Load the behavioral info here
+                obj.(matchedNames{ii}).behave_info = load(obj.(matchedNames{ii}).behave_fname);
+
+                %% Convert respmat vales from old (-3 to 3) to new (111 to 116)
+
                 %% Load macrowire time stamps
                 timestamps = tmp.processing.get('ecephys').nwbdatainterface.get...
                     ('LFP').electricalseries.get('MacroWireSeries').timestamps.load;
@@ -196,6 +201,52 @@ classdef memOrder < handle
                 %% Calculate correction factor
                 obj.(matchedNames{ii,1}).correction_factor = obj.(matchedNames{ii,1}).LFPIdx(1,1) - 1;
                 obj.(matchedNames{ii,1}).LFPIdx = obj.(matchedNames{ii,1}).LFPIdx - obj.(matchedNames{ii,1}).correction_factor;
+
+                %% Find respMat table
+                % fieldNames = fieldnames(obj.(matchedNames{ii}).respMat);
+                % respMat_name = cell(length(fieldNames),1);
+                % for z = 1:length(fieldNames)
+                %     if contains(fieldNames{z,1},'respMat')
+                %         respMat_name{z,1} = fieldNames{z,1};
+                %     end
+                % end
+
+                %% Remove empty cells
+                % respMat_name = respMat_name(~cellfun('isempty',respMat_name));
+
+                %% Convert response TTLs if they exist
+                % responseVals = [111 112 113 114 115 116];
+                % originalVals = [-3 -2 -1 1 2 3];
+                % for z = 1:length(obj.(matchedNames{ii,1}).respMat.(respMat_name{1,1}))
+                %     [~,idx] = ismember(obj.(matchedNames{ii,1}).respMat.(respMat_name{1,1})(z).respValue,originalVals);
+                %     if ~isempty(idx)
+                %         obj.(matchedNames{ii,1}).confidenceRating(z,1) = responseVals(idx);
+                %     else
+                %         obj.(matchedNames{ii,1}).confidenceRating(z,1) = NaN;
+                %     end
+                % end
+
+                %% Test
+                % count1 = 1;
+                % for a = 1:length(obj.(matchedNames{ii,1}).eventIDs)
+                %     if (obj.(matchedNames{ii,1}).eventIDs(a,1) < 111) || (isnan(obj.(matchedNames{ii,1}).eventIDs(a,1)))
+                %         continue
+                %     elseif (obj.(matchedNames{ii,1}).eventIDs(a,1) >= 111) && (obj.(matchedNames{ii,1}).eventIDs(a+1,1) >= 111)
+                %         num1 = obj.(matchedNames{ii,1}).eventIDs(a,1);
+                %         num2 = obj.(matchedNames{ii,1}).eventIDs(a+1,1);
+                %         confRating = obj.(matchedNames{ii,1}).confidenceRating(count1,1);
+                %         if num1 == confRating
+                %             obj.(matchedNames{ii,1}).eventIDs(a+1,1) = NaN;
+                %             count1 = count1 + 1;
+                %         elseif num2 == confRating
+                %             obj.(matchedNames{ii,1}).eventIDs(a,1) = NaN;
+                %             count1 = count1 + 1;
+                %         end
+                %     end
+                % end
+
+                %% Find NaNs if they exist
+                % I = isnan(obj.(matchedNames{ii,1}).eventIDs);
 
             end
         end
@@ -385,9 +436,6 @@ classdef memOrder < handle
                 %% Get the task
                 task = obj.validTasks{ii,1};
 
-                %% Load the behavior info
-                obj.(task).behave_info = load(obj.(task).behave_fname);
-
                 %% Manually exclude bad trials
                 if strcmp(obj.subID,'MW27') & strcmp(task,'timeDiscrim')
                     obj.(task).eventIDs(128) = [];
@@ -395,10 +443,10 @@ classdef memOrder < handle
                 end
 
                 %% Sort the TTLs of interest
-                obj.(task).crossOnIdx = obj.(task).LFPIdx(obj.(task).eventIDs == 11);
-                obj.(task).clipOnIdx = obj.(task).LFPIdx(obj.(task).eventIDs == 1);
-                obj.(task).clipOffIdx = obj.(task).LFPIdx(obj.(task).eventIDs == 2);
-                obj.(task).questionIdx = obj.(task).LFPIdx(obj.(task).eventIDs == 3);
+                obj.(task).Indices.crossOnIdx = obj.(task).LFPIdx(obj.(task).eventIDs == 11);
+                obj.(task).Indices.clipOnIdx = obj.(task).LFPIdx(obj.(task).eventIDs == 1);
+                obj.(task).Indices.clipOffIdx = obj.(task).LFPIdx(obj.(task).eventIDs == 2);
+                obj.(task).Indices.questionIdx = obj.(task).LFPIdx(obj.(task).eventIDs == 3);
 
                 %% Find the resp field
                 fieldNames = fieldnames(obj.(task).behave_info);
@@ -411,10 +459,10 @@ classdef memOrder < handle
                 %% Remove bad trial
                 if strcmp(obj.subID,'MW26') & strcmp(task,'sceneRecog')
                     obj.sceneRecog.behave_info.respMat_SceneRecog(127) = []; % last trial was not completed
-                    obj.(task).crossOnIdx(127) = [];
-                    obj.(task).clipOnIdx(127) = [];
-                    obj.(task).clipOffIdx(127) = [];
-                    obj.(task).questionIdx(127) = [];
+                    obj.(task).Indices.crossOnIdx(127) = [];
+                    obj.(task).Indices.clipOnIdx(127) = [];
+                    obj.(task).Indices.clipOffIdx(127) = [];
+                    obj.(task).Indices.questionIdx(127) = [];
                 end
 
                 %% Create artificial indicies for crossOff and response
@@ -426,8 +474,8 @@ classdef memOrder < handle
                 end
 
                 %% Convert from time to samples and add to object
-                obj.(task).crossOffIdx = obj.(task).crossOnIdx + (floor(obj.(task).fs .* cross));
-                obj.(task).responseIdx = obj.(task).questionIdx + (floor(obj.(task).fs .* response));
+                obj.(task).Indices.crossOffIdx = obj.(task).Indices.crossOnIdx + (floor(obj.(task).fs .* cross));
+                obj.(task).Indices.responseIdx = obj.(task).Indices.questionIdx + (floor(obj.(task).fs .* response));
 
             end
         end
@@ -485,10 +533,10 @@ classdef memOrder < handle
                 extractSegments = @(s,e) obj.(task).referencedData(:,s:e-1);
 
                 %% Grab data segments
-                obj.(task).fixation = arrayfun(@(i) extractSegments(obj.(task).crossOnIdx(i),obj.(task).crossOffIdx(i)), 1:length(obj.(task).boundary), 'UniformOutput', false )';
-                obj.(task).presentation = arrayfun(@(i) extractSegments(obj.(task).clipOnIdx(i),obj.(task).clipOffIdx(i)), 1:length(obj.(task).boundary), 'UniformOutput', false )';
-                obj.(task).question = arrayfun(@(i) extractSegments(obj.(task).questionIdx(i),obj.(task).responseIdx(i)), 1:length(obj.(task).boundary), 'UniformOutput', false )';
-                obj.(task).epoch = arrayfun(@(i) extractSegments(obj.(task).crossOnIdx(i),obj.(task).responseIdx(i)), 1:length(obj.(task).boundary), 'UniformOutput', false )';
+                obj.(task).Data.fixation = arrayfun(@(i) extractSegments(obj.(task).Indices.crossOnIdx(i),obj.(task).Indices.crossOffIdx(i)), 1:length(obj.(task).boundary), 'UniformOutput', false )';
+                obj.(task).Data.presentation = arrayfun(@(i) extractSegments(obj.(task).Indices.clipOnIdx(i),obj.(task).Indices.clipOffIdx(i)), 1:length(obj.(task).boundary), 'UniformOutput', false )';
+                obj.(task).Data.question = arrayfun(@(i) extractSegments(obj.(task).Indices.questionIdx(i),obj.(task).Indices.responseIdx(i)), 1:length(obj.(task).boundary), 'UniformOutput', false )';
+                obj.(task).Data.epoch = arrayfun(@(i) extractSegments(obj.(task).Indices.crossOnIdx(i),obj.(task).Indices.responseIdx(i)), 1:length(obj.(task).boundary), 'UniformOutput', false )';
 
             end
         end
@@ -511,19 +559,23 @@ classdef memOrder < handle
                 task = obj.validTasks{ii,1};
 
                 %% Loop through trials
-                for jj = 1:length(obj.(task).fixation)
+                for jj = 1:length(obj.(task).Data.fixation)
 
                     %% Calculate channel means
-                    ch_mean = mean(obj.(task).fixation{jj,1},2);
+                    ch_mean = mean(obj.(task).Data.fixation{jj,1},2);
 
                     %% Subtract from fixation
-                    obj.(task).fixation{jj,1} = obj.(task).fixation{jj,1} - ch_mean;
+                    obj.(task).Data.fixation{jj,1} = obj.(task).Data.fixation{jj,1} - ch_mean;
 
                     %% Subtract from presentation
-                    obj.(task).presentation{jj,1} = obj.(task).presentation{jj,1} - ch_mean;
+                    obj.(task).Data.presentation{jj,1} = obj.(task).Data.presentation{jj,1} - ch_mean;
 
                     %% Subtract from question
-                    obj.(task).question{jj,1} = obj.(task).question{jj,1} - ch_mean;
+                    obj.(task).Data.question{jj,1} = obj.(task).Data.question{jj,1} - ch_mean;
+
+                    %% Subtract from entire epoch
+                    obj.(task).Data.epoch{jj,1} = obj.(task).Data.epoch{jj,1} - ch_mean;
+
                 end
             end
         end
@@ -548,7 +600,7 @@ classdef memOrder < handle
                 end
 
                 %% Bands for cross presentation
-                bands = [obj.(task).crossOnIdx,obj.(task).crossOffIdx];
+                bands = [obj.(task).Indices.crossOnIdx,obj.(task).Indices.crossOffIdx];
                 xp = [bands fliplr(bands)];
                 yp = ([[1;1]*min(ylim); [1;1]*max(ylim)]*ones(1,size(bands,1))).';
                 for k = 1:size(bands,1)
@@ -556,14 +608,14 @@ classdef memOrder < handle
                 end
 
                 %% Bands for clip presentation
-                bands = [obj.(task).clipOnIdx,obj.(task).clipOffIdx];
+                bands = [obj.(task).Indices.clipOnIdx,obj.(task).Indices.clipOffIdx];
                 xp = [bands fliplr(bands)];
                 for k = 1:size(bands,1)
                     patch(xp(k,:),yp(k,:),[0 1 0],'FaceAlpha',0.3,'EdgeColor','none')
                 end
 
                 %% Bands for response
-                bands = [obj.(task).questionIdx,obj.(task).responseIdx];
+                bands = [obj.(task).Indices.questionIdx,obj.(task).Indices.responseIdx];
                 xp = [bands fliplr(bands)];
                 for k = 1:size(bands,1)
                     patch(xp(k,:),yp(k,:),[0 0 1],'FaceAlpha',0.3,'EdgeColor','none')
@@ -600,10 +652,10 @@ classdef memOrder < handle
                 for jj = 1:length(obj.validPhases)
 
                     %% Loop through trials
-                    for kk = 1:length(obj.(task).(obj.validPhases{jj,1}))
+                    for kk = 1:length(obj.(task).Data.(obj.validPhases{jj,1}))
 
                         %% Grab the trial data
-                        tmp = obj.(task).(obj.validPhases{jj,1}){kk,1};
+                        tmp = obj.(task).Data.(obj.validPhases{jj,1}){kk,1};
 
                         %% Loop through channels and compute CWT
                         for ll = 1:size(tmp,1)
@@ -612,17 +664,17 @@ classdef memOrder < handle
                             powerField = append(obj.validPhases{jj,1},'Power');
 
                             %% Ignore NaN
-                            if ~isnan(tmp(ll,:))
+                            if ~isnan(tmp(ll,:)) & length(tmp) > 200
 
                                 %% Compute power
                                 [wt,f] = cwt(tmp(ll,:),obj.(task).fs);
 
                                 %% Grab power for frequency range of interest
                                 I = f >= freq(1,1) & f <= freq(2,1);
-                                obj.(task).(powerField){kk,1}(ll,:) = mean(abs(wt(I,:)),1);
+                                obj.(task).Power.(powerField){kk,1}(ll,:) = mean(abs(wt(I,:)),1);
 
                             else
-                                obj.(task).(powerField){kk,1}(ll,:) = NaN;
+                                obj.(task).Power.(powerField){kk,1}(ll,:) = NaN;
                             end
 
                         end
@@ -659,32 +711,32 @@ classdef memOrder < handle
                     phasePower = append(phase,'Power');
 
                     %% Loop through trials to calculate average power
-                    for kk = 1:length(obj.(task).(phasePower))
+                    for kk = 1:length(obj.(task).Power.(phasePower))
 
                         %% Create field name
                         ave_power = append('ave_',phasePower);
 
                         %% Grab the data
-                        tmp = obj.(task).(phasePower){kk,1};
+                        tmp = obj.(task).Power.(phasePower){kk,1};
 
                         %% Check if any data isnan
                         if ~any(isnan(tmp))
 
                             %% Loop through to calculate average power
                             for ll = 1:size(tmp,1)
-                                obj.(task).(ave_power)(ll,kk) = mean(obj.(task).(phasePower){kk,1}(ll,:));
+                                obj.(task).Power.(ave_power)(ll,kk) = mean(obj.(task).Power.(phasePower){kk,1}(ll,:));
                             end
                         end
                     end
                 end
 
                 %% Compare power in presentation vs question phase
-                for jj = 1:size(obj.(task).ave_presentationPower,1)
-                    obj.(task).powerStats(jj,1) = ranksum(obj.(task).ave_presentationPower(jj,:), obj.(task).ave_questionPower(jj,:));
+                for jj = 1:size(obj.(task).Power.ave_presentationPower,1)
+                    obj.(task).Power.powerStats(jj,1) = ranksum(obj.(task).Power.ave_presentationPower(jj,:), obj.(task).Power.ave_questionPower(jj,:));
                 end
 
                 %% Correct for false discovery using Benjamini-Hochberg
-                [val,idx] = sort(obj.(task).powerStats,'ascend');
+                [val,idx] = sort(obj.(task).Power.powerStats,'ascend');
                 adjusted_p = zeros(length(val),1);
                 corrected = NaN(length(val),1);
                 for z = 1:length(val)
@@ -699,8 +751,8 @@ classdef memOrder < handle
                 %% Identify significant channels
                 corrected = logical(corrected);
                 new_names_corrected = obj.(task).referencedChName(idx);
-                obj.(task).powerProb = val(corrected);
-                obj.(task).powerSigChannels = new_names_corrected(corrected);
+                obj.(task).Power.powerProb = val(corrected);
+                obj.(task).Power.powerSigChannels = new_names_corrected(corrected);
 
             end
         end
@@ -731,13 +783,13 @@ classdef memOrder < handle
                     phase = obj.validPhases{jj,1};
 
                     %% Add method to object
-                    obj.(task).fcMethod = method;
+                    obj.(task).Connectivity.fcMethod = method;
 
                     %% Loop through trials
-                    for kk = 1:length(obj.(task).(phase))
+                    for kk = 1:length(obj.(task).Data.(phase))
 
                         %% Grab the data
-                        tmp = obj.(task).(phase){kk,1};
+                        tmp = obj.(task).Data.(phase){kk,1};
 
                         %% Compute FC based on method
                         if strcmp(method,'granger')
@@ -747,16 +799,16 @@ classdef memOrder < handle
 
                             %% Preallocate
                             fc = append(phase,'FC');
-                            obj.(task).(fc){kk,1} = zeros(size(tmp,1),size(tmp,1));
+                            obj.(task).Connectivity.(fc){kk,1} = zeros(size(tmp,1),size(tmp,1));
 
                             %% Skip trial if not enough data
                             if length(tmp) < 4*lags
-                                obj.(task).(fc){kk,1} = NaN(size(tmp,1),size(tmp,1)); % or zeros
+                                obj.(task).Connectivity.(fc){kk,1} = NaN(size(tmp,1),size(tmp,1)); % or zeros
                                 continue
                             end
 
                             %% Add lags to the object
-                            obj.(task).numLags = lags;
+                            obj.(task).Connectivity.numLags = lags;
 
                             %% Loop over channels
                             for ll = 1:size(tmp,1)
@@ -776,7 +828,10 @@ classdef memOrder < handle
                                         var_full = var(R_full(1,:),0,2);
 
                                         %% Write FC values
-                                        obj.(task).(fc){kk,1}(ll,mm) = log(var_reduced/var_full);
+                                        obj.(task).Connectivity.(fc){kk,1}(ll,mm) = log(var_reduced/var_full);
+
+                                        %% Clear variables
+                                        clear sig_reduced sig_full R_reduced R_full var_reduced var_full;
 
                                     end
                                 end
@@ -785,7 +840,7 @@ classdef memOrder < handle
 
                             %% Preallocate
                             fc = append(phase,'FC');
-                            obj.(task).(fc){kk,1} = zeros(size(tmp,1),size(tmp,1));
+                            obj.(task).Connectivity.(fc){kk,1} = zeros(size(tmp,1),size(tmp,1));
 
                             %% Loop over channels
                             for ll = 1:size(tmp,1)
@@ -799,7 +854,7 @@ classdef memOrder < handle
                                         J = f >= min(obj.(task).powerFreq) & f <= max(obj.(task).powerFreq);
 
                                         %% Write the mean values
-                                        obj.(task).(fc){kk,1}(ll,mm) = mean(x(J));
+                                        obj.(task).Connectivity.(fc){kk,1}(ll,mm) = mean(x(J));
                                     elseif ll == mm
                                         fc = append(phase,'FC');
                                         obj.(task).(fc){kk,1}(ll,mm) = 0;
@@ -832,7 +887,7 @@ classdef memOrder < handle
                 task = obj.validTasks{ii,1};
 
                 %% Compare FC between presentation and question phases
-                if isfield(obj.(task),'presentationFC') && isfield(obj.(task),'questionFC')
+                if isfield(obj.(task).Connectivity,'presentationFC') && isfield(obj.(task),'questionFC')
 
                     %% Identify boundary of interest
                     I = strcmp(obj.(task).boundary,boundary);

@@ -1,6 +1,8 @@
+%% Clear
+clear;
+clc;
 
-% STEP 1: Change path directories. Choose the NAS case but update the paths
-% the first time you use it to make sure they are correct.
+%% STEP1: Get path directories
 
 getPCname = getenv('COMPUTERNAME');
 
@@ -55,7 +57,7 @@ switch getPCname
 
     case 'NERDCO-POSTDOC' %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Code location
-        codeLocation = 'C:\Users\Kevin_Tyner\Documents\GitHub\Mem_Order\MO_EyeprocessingCode'; %%%%%%%%%%%%%%%%%
+        codeLocation = 'C:\Users\Kevin_Tyner\Documents\GitHub\Mem_Order\MO_EyeprocessingCode\KT_Test'; %%%%%%%%%%%%%%%%%
         addpath(codeLocation)
         % Mex file for converting eye tracking data
         edfMexELloc = 'C:\Users\Kevin_Tyner\Documents\GitHub\Mem_Order\MO_EyeprocessingCode\edfmex';
@@ -88,14 +90,7 @@ ptID = 'MW23'; % 18, issue with 24
 clc
 
 %% STEP 4 Run Initial_EyeAnalysis function
-
 savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
     'Eye-tracking\Processed\eyeDATA'];
 
-EyeAnalysis_DataExtract_MO(excelLocation, dataLocation, ptID, savePreProcLocation);
-clc
-
-%% STEP 4.1 RUN initial eye position function
-
-EyeAnalysis_DataExtract_EL_Gaze(excelLocation, dataLocation, ptID, savePreProcLocation);
-clc
+EyeAnalysis_DataExtract_MO_V2(excelLocation, dataLocation, ptID, savePreProcLocation);

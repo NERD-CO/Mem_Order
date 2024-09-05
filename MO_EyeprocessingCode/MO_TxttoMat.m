@@ -77,8 +77,17 @@ TTLdescription=cell(size(TTLnumber));
 for i=1:length(TTLnumber)
     tempN=TTLnumber{i};
     % Find matching ID for TTL value from keyTable
-    TTLlabel=keyTable.TTLI(ismember(keyTable.TTLN,tempN));
-    TTLdescription{i}=TTLlabel{1}; %1=value is true, 0=value is false
+
+    % KT add - 8/27/24
+    if ~ismember(tempN,keyTable.TTLN)
+        TTLdescription{i} = 'NaN';
+    else
+        TTLlabel=keyTable.TTLI(ismember(keyTable.TTLN,tempN));
+        TTLdescription{i}=TTLlabel{1};
+    end
+
+    %TTLlabel=keyTable.TTLI(ismember(keyTable.TTLN,tempN));
+    %TTLdescription{i}=TTLlabel{1}; %1=value is true, 0=value is false
 end
 
 end

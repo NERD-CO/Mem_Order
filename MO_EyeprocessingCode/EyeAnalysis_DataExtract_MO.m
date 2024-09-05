@@ -63,26 +63,27 @@ for vi = 1:length(all_MOsessions)
         fixTABLE_Eye1 ,...
         sacTABLE_Eye0 ,...
         sacTABLE_Eye1 ,...
-        allgazeTAB]  = ExtractEyeInfo_EL_MO(tmpEye_matFile,respMat);
+        allgazeTAB]  = ExtractEyeInfo_EL_MO(tmpEye_matFile,respMat); 
 
     trialID = unique(tsTable.TrialID(tsTable.TrialID ~= 0));
 
-    [leftEYE_Learn , rightEYE_Learn , learnTTLinfo] = getEYErawEpoch(allgazeTAB , tsTable , trialID);
+    [leftEYE , rightEYE , TTLinfo] = getEYErawEpoch(allgazeTAB , tsTable , trialID); %%%%%%%%%%%%%%%%%%%%% creates tmpTable
+    %[leftEYE , rightEYE , TTLinfo] = getEYErawEpoch_V2(allgazeTAB , tsTable , trialID, 400, 200);
 
     patientID = idTab.Subject{1};
 
     % Run function and load in new .mat file
     cd(behFolder); 
-    [behavFILE_learn] = MO_TxttoMat(moSessionTxtFname,patientID,mo_sessionID, behFolderP);
-    load(behavFILE_learn, 'outData') %loc and file name as input
+    [behavFILE_learn] = MO_TxttoMat(moSessionTxtFname,patientID,mo_sessionID, behFolderP); 
+    load(behavFILE_learn, 'outData'); %loc and file name as input
     tmpMOTTL = outData;
     cd(mainLOC);
-    tmpMOTTLsummary = convertRAW2trial(tmpMOTTL);
+    tmpMOTTLsummary = convertRAW2trial(tmpMOTTL); 
 
 
-    % CONSIDER RE-NAMING RECOG INFO
+    % CONSIDER RE-NAMING RECOG INFO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    %%% TALK TO KEVIN 
+    %%% TALK TO KEVIN %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     recogINFO = table(confRatings, yesNoLearn , confRatings_logical, groundTruthRecog, ...
         confVal_1, confVal_2, confVal_3, confVal_4, confVal_5, confVal_6,...
         confVal_34, confVal_12, confVal_56, confVal_1256, confVal_16, 'VariableNames', ...
@@ -315,7 +316,7 @@ for tttrialir = 1:length(trialsOfInt)
 
     else
 
-        keyboard;
+        keyboard; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     end
     tmpTable.NLXttl = zeros(height(tmpOtrTAB.TTLid) + 2,1,'int64');
@@ -331,7 +332,7 @@ for tttrialir = 1:length(trialsOfInt)
 
     end
 
-    tmpTable.ELNKint = [1 ; middleEvents ; height(tsBlk_OUT)];
+    tmpTable.ELNKint = [1 ; middleEvents ; height(tsBlk_OUT)]; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     TTL_sInfo{tttrialir} = tmpTable;
 
@@ -417,7 +418,7 @@ function [outTABLE] = convertRAW2trial(inTTLtab)
 
 ttlINFO = inTTLtab.taskinformation;
 
-indexLOG = matches(ttlINFO.TTLvalue,'1');
+indexLOG = matches(ttlINFO.TTLvalue,'11'); % change from 1 to 11 - KT 8/27/24
 indexLOC = find(indexLOG);
 % trialN = sum(indexLOG);
 % trialVec = 1:trialN;
