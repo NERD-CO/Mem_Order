@@ -32,12 +32,54 @@ trialIDtmp(eventLoc) = TTLnuMS;
 
 tsTable.TrialID = trialIDtmp;
 
+%% Add rows for responses if they don't exist
+if ~any(ismember(tsTable.TTLid,responseEvents))
+    response = [-3 -2 -1 1 2 3];
+    newRow = table(NaN,NaN,NaN,NaN,'VariableNames',tsTable.Properties.VariableNames);
+    idx = find(tsTable.TTLid == 3);
+    for i = length(idx):-1:1
+
+        %% Add empty row
+        tsTable = [tsTable(1:idx(i),:); newRow; tsTable(idx(i)+1:end,:)];
+
+        %% Create ELmessage
+        [~,val] = ismember(behavioR(i).respValue,response);
+        tsTable.ELmessage{idx(i)+1} = append('TTL=',num2str(responseEvents(val)));
+
+        %% Add TTL
+        if ~isempty(val)
+            tsTable.TTLid(idx(i)+1) = responseEvents(val);
+        end
+
+        %% Add trial ID
+        tsTable.TrialID(idx(i)+1) = tsTable.TrialID(idx(i));
+
+        %% Add time stamp
+        eventTime = (behavioR(i).respTime - behavioR(i).QuesStart)*1000;
+        tsTable.timeStamp(idx(i)+1) = tsTable.timeStamp(idx(i)) + eventTime;
+
+        %% Warn if time issue
+        if tsTable.timeStamp(idx(i)+1) > tsTable.timeStamp(idx(i)+2)
+            warning('Eye tracking for trial %s overlaps with trial %s..\n',i,i+1)
+        end
+
+    end
+end
+
 %% Create behavior table
 clipStime = tsTable.timeStamp(tsTable.TTLid == 2);
 clipStrial = tsTable.TrialID(tsTable.TTLid == 2);
-clipIDS = {behavioR.ClipName};
+if isfield(behavioR,'ClipName') % Encode
+    clipIDS = {behavioR.ClipName};
+elseif isfield(behavioR,'FrameName') % Scene Recog
+    clipIDS = {behavioR.FrameName};
+end
 quesStime = tsTable.timeStamp(tsTable.TTLid == 3);
-quesIDS = {behavioR.QuesName};
+if isfield(behavioR,'QuesName') % Encode
+    quesIDS = {behavioR.QuesName};
+else
+    quesIDS = cell(1,length(behavioR));
+end
 behTABLE = struct2table(behavioR);
 responTimeSecs = behTABLE.respTime - behTABLE.QuesStart;
 

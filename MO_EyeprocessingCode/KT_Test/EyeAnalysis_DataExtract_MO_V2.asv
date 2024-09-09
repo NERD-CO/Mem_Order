@@ -54,7 +54,7 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
             case 'sc'
                 moSessionTxtFname = txtLIST2{contains(txtLIST2,'scene')};
                 moSessionMatFname = matLIST2{contains(matLIST2,'scene')};
-            case 'ti'
+            case 'td'
                 moSessionTxtFname = txtLIST2{contains(txtLIST2,'timeDiscrim')};
                 moSessionMatFname = matLIST2{contains(matLIST2,'timeDiscrim')};
         end
@@ -67,16 +67,12 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
         fieldNames = fieldnames(respMat);
         matchedNames = cell(length(fieldNames),1);
         for ii = 1:length(fieldNames)
-            if contains(fieldNames{ii,1},'respMat')
-                matchedNames{ii,1} = fieldNames{ii,1};
+            if isstruct(obj.(fieldNames{ii,1}))
+                if ~isempty(obj.(fieldNames{ii,1}))
+                    matchedNames{ii,1} = fieldNames{ii,1};
+                end
             end
         end
-
-        %% Remove empty cells
-        matchedNames = matchedNames(~cellfun('isempty',matchedNames));
-
-        %% Grab respMat
-        respMat = respMat.(matchedNames{1,1});
 
         %% Get eye data
         cd(procFolder)
