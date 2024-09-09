@@ -384,7 +384,6 @@ classdef memOrder < handle
                 jj = 1;
                 temp = NaN(length(obj.(task).keepIdx),length(obj.(task).filteredData));
                 ch_name = cell(length(obj.(task).keepIdx),1);
-                %obj.(task).keepIdx = logical([1;1;1;1;0;1;1;1;1;1;1;1;1;1;1]); %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FOR TESTING
                 while jj <= length(obj.(task).keepIdx)
                     if obj.(task).keepIdx(jj,1) == 1
                         temp(jj,:) = obj.(task).filteredData(jj,:);
@@ -408,11 +407,11 @@ classdef memOrder < handle
                 %% Do bipolar referencing
                 for jj = 1:length(ch_name)
                     if jj < length(ch_name)
-                        obj.(task).referencedData(jj,:) =  temp(jj+1,:) - temp(jj,:);
-                        obj.(task).referencedChName{jj,:} = append(ch_name{jj+1},'-',ch_name{jj,1});
+                        obj.(task).referencedData(jj,:) =  temp(jj,:) - temp(jj+1,:);
+                        obj.(task).referencedChName{jj,:} = append(ch_name{jj},'-',ch_name{jj+1,1});
                     elseif jj == length(ch_name)
-                        obj.(task).referencedData(jj,:) = temp(1,:) - temp(jj,:);
-                        obj.(task).referencedChName{jj,1} = append(ch_name{1,1},'-',ch_name{jj,1});
+                        obj.(task).referencedData(jj,:) = temp(jj,:) - temp(1,:);
+                        obj.(task).referencedChName{jj,1} = append(ch_name{jj,1},'-',ch_name{1,1});
                     end
                 end
             end
@@ -592,33 +591,54 @@ classdef memOrder < handle
                 %% Grab the task
                 task = obj.validTasks{ii,1};
 
+                %% Create title
+                title_str = append(obj.subID,' ','Task',' ',task);
+
                 %% Plot
                 figure(ii)
+                fig = gca;
+                fig.XAxis.FontSize = 24;
+                fig.XAxis.FontWeight = 'bold';
+                fig.YAxis.FontSize = 24;
+                fig.YAxis.FontWeight = 'bold';
+                fig.XLim = ([min(obj.(task).LFP_converted_timestamps) max(obj.(task).LFP_converted_timestamps)]);
+                fig.YLim = ([1.1*(min(min(obj.(task).referencedData))) 1.1*max(max(obj.(task).referencedData))]);
+                title(title_str,'FontWeight','bold','FontSize',28);
                 hold on
                 for z = 1:size(obj.(task).referencedData,1)
-                    plot(obj.(task).referencedData(z,:))
+                    plot(obj.(task).LFP_converted_timestamps,obj.(task).referencedData(z,:))
                 end
 
+                %% Figure properties
+                xlabel('Time (sec)','FontWeight','bold','FontSize',24);
+                ylabel('Amplitude (V)','FontWeight','bold','FontSize',24);
+
                 %% Bands for cross presentation
-                bands = [obj.(task).Indices.crossOnIdx,obj.(task).Indices.crossOffIdx];
+                crossOnIdx = (obj.(task).Indices.crossOnIdx + obj.(task).correction_factor)./obj.(task).fs;
+                crossOffIdx = (obj.(task).Indices.crossOffIdx + obj.(task).correction_factor)./obj.(task).fs;
+                bands = [crossOnIdx,crossOffIdx];
                 xp = [bands fliplr(bands)];
-                yp = ([[1;1]*min(ylim); [1;1]*max(ylim)]*ones(1,size(bands,1))).';
+                yp = ([[1;1]*1.1*min(ylim); [1;1]*1.1*max(ylim)]*ones(1,size(bands,1))).';
                 for k = 1:size(bands,1)
-                    patch(xp(k,:),yp(k,:),[1 0 0],'FaceAlpha',0.3,'EdgeColor','none')
+                    patch(xp(k,:),yp(k,:),[1 0 0],'FaceAlpha',0.1,'EdgeColor','none')
                 end
 
                 %% Bands for clip presentation
-                bands = [obj.(task).Indices.clipOnIdx,obj.(task).Indices.clipOffIdx];
+                clipOnIdx = (obj.(task).Indices.clipOnIdx + obj.(task).correction_factor)./obj.(task).fs;
+                clipOffIdx = (obj.(task).Indices.clipOffIdx + obj.(task).correction_factor)./obj.(task).fs;
+                bands = [clipOnIdx,clipOffIdx];
                 xp = [bands fliplr(bands)];
                 for k = 1:size(bands,1)
-                    patch(xp(k,:),yp(k,:),[0 1 0],'FaceAlpha',0.3,'EdgeColor','none')
+                    patch(xp(k,:),yp(k,:),[0 1 0],'FaceAlpha',0.1,'EdgeColor','none')
                 end
 
                 %% Bands for response
-                bands = [obj.(task).Indices.questionIdx,obj.(task).Indices.responseIdx];
+                questionIdx = (obj.(task).Indices.questionIdx + obj.(task).correction_factor)./obj.(task).fs;
+                responseIdx = (obj.(task).Indices.responseIdx + obj.(task).correction_factor)./obj.(task).fs;
+                bands = [questionIdx,responseIdx];
                 xp = [bands fliplr(bands)];
                 for k = 1:size(bands,1)
-                    patch(xp(k,:),yp(k,:),[0 0 1],'FaceAlpha',0.3,'EdgeColor','none')
+                    patch(xp(k,:),yp(k,:),[0 0 1],'FaceAlpha',0.1,'EdgeColor','none')
                 end
 
             end
@@ -927,19 +947,42 @@ classdef memOrder < handle
                     fc_question_min = min(min(ques_fc));
                     x = min(fc_presentation_min,fc_question_min);
 
+                    title1_string = append(obj.subID,' ',task,' Presentation FC');
+                    title2_string = append(obj.subID,' ',task,' Question FC');
+
                     figure
                     imagesc(pres_fc);
+                    title(title1_string,'FontSize',24,'FontWeight','bold');
+                    fig = gca;
+                    fig.XAxis.FontSize = 24;
+                    fig.XAxis.FontWeight = 'bold';
+                    xlabel('Channel (From)','FontWeight','bold','FontSize',24);
+                    fig.YAxis.FontSize = 24;
+                    fig.YAxis.FontWeight = 'bold';
+                    ylabel('Channel (To)','FontWeight','bold','FontSize',24);
                     clim manual;
                     clim([x y]);
                     cb = colorbar;
-                    cb.Label.String = 'Presentation FC';
+                    cb.Label.String = 'F-Value';
+                    cb.FontSize = 24;
+                    cb.FontWeight = 'bold';cb.FontWeight = 'bold';
 
                     figure
                     imagesc(ques_fc);
+                    title(title2_string,'FontSize',24,'FontWeight','bold');
+                    fig = gca;
+                    fig.XAxis.FontSize = 24;
+                    fig.XAxis.FontWeight = 'bold';
+                    xlabel('Channel (From)','FontWeight','bold','FontSize',24);
+                    fig.YAxis.FontSize = 24;
+                    fig.YAxis.FontWeight = 'bold';
+                    ylabel('Channel (To)','FontWeight','bold','FontSize',24);
                     clim manual;
-                    clim([x y])
+                    clim([x y]);
                     cb = colorbar;
-                    cb.Label.String = 'Question FC';
+                    cb.Label.String = 'F-Value';
+                    cb.FontSize = 24;
+                    cb.FontWeight = 'bold';cb.FontWeight = 'bold';
 
                     %% Calculate probability values for FC
                     p = ones(length(obj.(task).referencedChName)*length(obj.(task).referencedChName),1);
