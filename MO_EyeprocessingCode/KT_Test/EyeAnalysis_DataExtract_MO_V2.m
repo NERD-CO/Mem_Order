@@ -104,14 +104,20 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
         respMat = convertrespVals(respMat);
 
         %% Create table
-        
+        task = extractBefore(extractAfter(moSessionMatFname,'_'),'.');
+        outTable = generateTable(respMat,task);
 
-        %%
-        x = 0;
-        clear respMat;
+        %% Add to structure
+        outInfo.(task).table = outTable;
+        outInfo.(task).leftEYE = leftEYE;
+        outInfo.(task).rightEYE = rightEYE;
+        outInfo.(task).tsTable = tsTable;
+        outInfo.(task).TTLinfo = TTLinfo;
+        outInfo.(task).vidQtable = vidQtable;
+        outInfo.(task).respMat = respMat;
+        outInfo.(task).sacTABLE_Eye0 = sacTABLE_Eye0;
+        outInfo.(task).sacTABLE_Eye1 = sacTABLE_Eye1;
 
     end
 
-    %%
-    x = 0;
 end
