@@ -1393,7 +1393,6 @@ function [s_data] = SPRiNT_specparam_matlab(TF, fs, opt, ts)
 
     SPRiNT = cluster_peaks_dynamic2(SPRiNT); % Cluster peaks
     s_data.SPRiNT = SPRiNT;
-    x = 0;
 end
 
 %% Fit aperiodic

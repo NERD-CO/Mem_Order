@@ -113,10 +113,6 @@ switch task
                 PtCorrect(ii,1) = 1;
             end
         end
-        x = 0;
-
-
-        x = 0;
 end
 
 %% Get the boundary type
@@ -124,6 +120,5 @@ Boundary = extractBefore(FrameName,'_');
 
 %% Build Table
 outTable = table(CrossStart,CrossEnd,FrameStart,FrameEnd,FrameName,FrameOrder,QuesStart,QuesEnd,QuesName,respValue,RealAnswer,PtCorrect,Boundary);
-x = 0;
 
 end
