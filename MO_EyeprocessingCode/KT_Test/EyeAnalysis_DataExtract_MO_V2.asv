@@ -117,10 +117,7 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
         outInfo.(task).respMat = respMat;
         outInfo.(task).sacTABLE_Eye0 = sacTABLE_Eye0;
         outInfo.(task).sacTABLE_Eye1 = sacTABLE_Eye1;
-        x = 0;
 
     end
 
-    %%
-    x = 0;
 end

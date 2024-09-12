@@ -6,41 +6,20 @@ getPCname = getenv('COMPUTERNAME');
 
 switch getPCname
     case 'DESKTOP-FAGRV5G'
-        % % Code location
-        % codeLocation = 'C:\Users\Admin\Documents\Github\Neurocuanalysis\Mem_Order_analysis';
-        % addpath(codeLocation)
-        % % Mex file for converting eye tracking data
-        % edfMexELloc = 'C:\Users\Admin\Documents\Github\Neurocuanalysis\edfmex';
-        % edfCheck2 = which('edfmex.mexa64');
-        % if isempty(edfCheck2)
-        %     addpath(genpath(edfMexELloc));
-        % end
-        % 
-        % % OPTIONAL - color maps
-        % cbrewLOC = 'C:\Users\Admin\Documents\Github\Neurocuanalysis\cbrewerALL';
-        % addpath(genpath(cbrewLOC))
-        % 
-        % % File with subject information 
-        % excelLocation = 'Z:\Tyner_K_Projects\MEM_ORDER';
-        % % Data folder location
-        % dataLocation = 'Z:\Tyner_K_Projects\MEM_ORDER\DataFolder';
-        % % Save locations for Eye data
-        % savePreProcLocation = [dataLocation , filesep , 'eyeDATA'];
-        % saveCleanLocation = [savePreProcLocation , filesep , 'cleaned_eyeDATA'];
-        % cd(codeLocation)
+   
     case 'DESKTOP-I5CPDO7'
         % Code location
-        codeLocation = 'C:\Users\Admin\Documents\Github\Neurocuanalysis\Mem_Order_analysis'; %%%%%%%%%%%%%%%%%
+        codeLocation = 'C:\Users\Admin\Documents\Github\Mem_Order'; %%%%%%%%%%%%%%%%%
         addpath(codeLocation)
         % Mex file for converting eye tracking data
-        edfMexELloc = 'C:\Users\Admin\Documents\Github\Neurocuanalysis\edfmex';
+        edfMexELloc = 'C:\Users\Admin\Documents\Github\Mem_Order\MO_EyeprocessingCode\edfmex';
         edfCheck2 = which('edfmex.mexa64');
         if isempty(edfCheck2)
             addpath(genpath(edfMexELloc));
         end
 
         % OPTIONAL - color maps
-        cbrewLOC = 'C:\Users\Admin\Documents\Github\Neurocuanalysis\cbrewerALL';
+        cbrewLOC = 'C:\Users\Admin\Documents\Github\Mem_Order\MO_EyeprocessingCode\cbrewerALL';
         addpath(genpath(cbrewLOC))
 
         % File with subject information 
@@ -93,6 +72,14 @@ savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
     'Eye-tracking\Processed\eyeDATA'];
 
 EyeAnalysis_DataExtract_MO(excelLocation, dataLocation, ptID, savePreProcLocation);
+clc
+
+%% STEP 4 KT test Initial_EyeAnalysis function
+
+savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
+    'Eye-tracking\Processed\eyeDATA'];
+
+EyeAnalysis_DataExtract_MO_V2(excelLocation, dataLocation, ptID, savePreProcLocation);
 clc
 
 %% STEP 4.1 RUN initial eye position function
