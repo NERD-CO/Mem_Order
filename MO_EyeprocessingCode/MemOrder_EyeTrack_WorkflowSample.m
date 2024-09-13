@@ -79,7 +79,7 @@ clc
 savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
     'Eye-tracking\Processed\eyeDATA'];
 
-EyeAnalysis_DataExtract_MO_V2(excelLocation, dataLocation, ptID, savePreProcLocation);
+EyeAnalysis_DataExtract_MO(excelLocation, dataLocation, ptID, savePreProcLocation);
 clc
 
 %% STEP 4.1 RUN initial eye position function
