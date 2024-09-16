@@ -99,6 +99,8 @@ for tttrialir = 1:length(trialsOfInt)
     [tsBlk_OUT] = getTSBlock(startTS,endTS,rawTIME);
 
     %% Get event sample number
+
+    disp(tttrialir)
     middleEvents = zeros(height(tmpOtrTAB),1,'int64');
     for mi = 1:height(tmpOtrTAB)
         [~,elnkLoc] = min(abs(double(tmpOtrTAB.timeStamp(mi)) - tsBlk_OUT.Time));

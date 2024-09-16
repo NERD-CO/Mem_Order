@@ -120,4 +120,8 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
 
     end
 
+    saveFname = ['eyeData_',ptID,'.mat'];
+    cd(saveLOC)
+    save(saveFname,"outInfo");
+
 end
