@@ -60,4 +60,4 @@ functionalConnectivity(obj,method);
 analyzeFC(obj,boundary);
 
 %% SPOOOF
-SPOOOF(obj,0.5,200);
+SPOOOF(obj,0.5,250);

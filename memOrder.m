@@ -1060,7 +1060,7 @@ classdef memOrder < handle
                 %% Inputs
                 % STFT options
                 opt.sfreq = obj.(task).fs; % input sampling rate
-                opt.WinLength = 0.5; % STFT window length; originally 1 (one second)
+                opt.WinLength = 0.5; % STFT window length; originally 1 (one second) (Lisa had 0.5)
                 opt.WinOverlap = 50; % Overlap between sliding windows (in %)
                 opt.WinAverage = 2; % Number of sliding windows averaged by time point
 

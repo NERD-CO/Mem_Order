@@ -35,7 +35,7 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
     moSessionSall = struct;
 
     %% Loop through sessions
-    for vi = 1:length(all_MOsessions)
+    for vi = 2:length(all_MOsessions)
 
         %% Grab session ID
         mo_sessionID = all_MOsessions{vi};
