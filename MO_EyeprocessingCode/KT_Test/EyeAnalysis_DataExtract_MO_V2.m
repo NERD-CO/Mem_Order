@@ -81,13 +81,15 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
         %% Get eye data
         cd(procFolder)
         tmpEye_matFile = matMOfnames{matches(matMOf_ids,mo_sessionID)};
-        [tsTable,vidQtable,fixTABLE_Eye0,fixTABLE_Eye1,sacTABLE_Eye0,sacTABLE_Eye1,allgazeTAB] = ExtractEyeInfo_EL_MO(tmpEye_matFile,respMat);
+        [tsTable,vidQtable,fixTABLE_Eye0,fixTABLE_Eye1,sacTABLE_Eye0,sacTABLE_Eye1,allgazeTAB] =...
+            ExtractEyeInfo_EL_MO(tmpEye_matFile,respMat);
 
         %% Trial IDs
         trialID = unique(tsTable.TrialID(tsTable.TrialID ~= 0));
 
         %% Create eye epochs
-        [leftEYE , rightEYE , TTLinfo] = getEYErawEpoch(allgazeTAB , tsTable , trialID, 500, 500);
+        % JAT added respmat input ----- 9/14/2024
+        [leftEYE , rightEYE , TTLinfo] = getEYErawEpoch(allgazeTAB , tsTable , trialID, 500, 500 , respMat);
 
         %% Patient ID
         patientID = idTab.Subject{1};

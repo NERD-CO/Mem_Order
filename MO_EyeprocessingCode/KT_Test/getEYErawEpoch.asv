@@ -29,6 +29,7 @@ rightEYE = table('Size',[0,size(bothVarNames,1)],...
 respmat = convertrespVals(respmat);
 respTABLE = struct2table(respmat);
 allRESPONSE =respTABLE.respTime - respTABLE.QuesStart;
+if any(~isnan(respTABLE.respValue))
 
 %% Preallocate
 TTL_sInfo = cell(numel(unique(ttlTABLE.TrialID(ttlTABLE.TrialID ~=0))),1);
@@ -45,23 +46,17 @@ for tttrialir = 1:length(trialsOfInt)
     trialTTLids = tmpOtrTAB.TTLid;
     if trialTTLids(1) > 100
 
+        keyboard
         % remove the current response row
         tmpOtrTAB = tmpOtrTAB(2:end,:);
         % repopulate response row
 
         % get info from Respmat 
         tmpRESPONSE = respTABLE(tmpOtrTAB.TrialID(1),:);
-        tmpOtrTAB.ELmessage{5} = ['TTL=',num2str(tmpRESPONSE.respValue{1})];
+        tmpOtrTAB.ELmessage{5} = 'TTL=120';
         tmpOtrTAB.TrialID(5) = tmpOtrTAB.TrialID(1);
         tmpOtrTAB.timeStamp(5) = round(allRESPONSE(tmpOtrTAB.TrialID(1))*1000) + tmpOtrTAB.timeStamp(4);
-        tmpOtrTAB.TTLid(5) = tmpRESPONSE.respValue{1};
-
-    end
-
-    diffOFFsets = diff(tmpOtrTAB.timeStamp);
-    if diffOFFsets(end) < 20
-
-           tmpOtrTAB.timeStamp(5) = round(allRESPONSE(tmpOtrTAB.TrialID(1))*1000) + tmpOtrTAB.timeStamp(4);
+        tmpOtrTAB.TTLid(5) = 120;
 
     end
 
@@ -126,19 +121,19 @@ for tttrialir = 1:length(trialsOfInt)
     tmpTable.ELNKttl = [startTS ; tmpOtrTAB.timeStamp ; endTS];
     [tsBlk_OUT] = getTSBlock(startTS,endTS,rawTIME);
     
-    % % Check location of Response - % JAT 9/14/2024
-    % if any(diff(tmpTable.ELNKttl) == 0)
-    %     % 1. Check order of EventDesc
-    %     % 2. Update based on respMat
-    %     % 
-    %     trialROW = respTABLE(tttrialir,:);
-    %     durationResp = trialROW.respTime - trialROW.QuesStart; % in seconds
-    %     resp2fixcross = trialROW.respTime - trialROW.CrossStart; % in seconds
-    %     respDuraSamps = round(durationResp * 1000);
-    %     respFixCrSamps = round(resp2fixcross * 1000);
-    % 
-    %     keyboard
-    % end
+    % Check location of Response - % JAT 9/14/2024
+    if any(diff(tmpTable.ELNKttl) == 0)
+        % 1. Check order of EventDesc
+        % 2. Update based on respMat
+        % 
+        trialROW = respTABLE(tttrialir,:);
+        durationResp = trialROW.respTime - trialROW.QuesStart; % in seconds
+        resp2fixcross = trialROW.respTime - trialROW.CrossStart; % in seconds
+        respDuraSamps = round(durationResp * 1000);
+        respFixCrSamps = round(resp2fixcross * 1000);
+
+        keyboard
+    end
 
 
     %% Get event sample number
