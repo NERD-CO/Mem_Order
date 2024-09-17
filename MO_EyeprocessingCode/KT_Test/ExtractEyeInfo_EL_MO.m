@@ -21,6 +21,8 @@ edfRAW = edfRawStruct;
 %% Picture and timestamp tables
 [tsTable, vidQuestable] = createTStable(edfRAW , behavOUTPUT);
 
+%%
+
 %% Grab data
 edfRAWEvent = struct2table(edfRAW.FEVENT);
 gxALL = edfRAW.FSAMPLE.gx;

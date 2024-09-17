@@ -22,18 +22,14 @@ tossEntry = nan(length(tsTable.TTLid),1);
 for ii = 1:length(tsTable.TTLid)
     if ~ismember(responseEvents,tsTable.TTLid(ii,1))
         tossEntry(ii,1) = 0;
-    else
+    elseif ismember(responseEvents,tsTable.TTLid(ii,1))
         num1 = tsTable.TTLid(ii-1,1);
         num2 = tsTable.TTLid(ii,1);
-        if ismember(num1,responseEvents) && ismember(num2,responseEvents)
-            tossEntry(ii,1) = 1;
-        else
-            tossEntry(ii,1) = 0;
-        end
+        num3 = tsTable.TTLid(ii+1,1);
+        if num2 ~= num1
+            tossEntry()
     end
 end
-tossEntry = logical(tossEntry);
-tsTable = tsTable(~tossEntry,:);
 
 %% Add trial ID
 taskEVEnts = [11 1 2 3 4 0];
