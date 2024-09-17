@@ -90,7 +90,7 @@ end
 
 %% Create behavior table
 clipStime = tsTable.timeStamp(tsTable.TTLid == 2);
-clipStrial = tsTable.TrialID(tsTable.TTLid == 2);
+clipStrial = tsTable.trialID(tsTable.TTLid == 2);
 if isfield(behavioR,'ClipName') % Encode
     clipIDS = {behavioR.ClipName};
 elseif isfield(behavioR,'FrameName') % Scene Recog
