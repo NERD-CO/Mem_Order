@@ -22,7 +22,8 @@ for i = 1:height(cleanTABLEt)
 
     tmpTTLid = cleanTABLEt.TTLid(i);
 
-    if ismember([60 61],tmpTTLid)
+    if ismember(tmpTTLid,[60,61])
+        trialID(i) = nan;
         continue
     end
 
@@ -39,7 +40,7 @@ cleanTABLEt.trialID = trialID;
 
 %% Explore response data
 
-uniTRAILid = unique(cleanTABLEt.trialID(cleanTABLEt.trialID ~= 0));
+uniTRAILid = unique(cleanTABLEt.trialID(cleanTABLEt.trialID ~= 0 & ~isnan(cleanTABLEt.trialID)));
 behavioR2 = behavioR;
 
 behavioR2 = convertrespVals(behavioR2);
@@ -58,12 +59,16 @@ for uui = 1:height(respMATT)
 
         c_trialTable = cleanTABLEt(ismember(cleanTABLEt.trialID,uui),:);
         if uui == length(uniTRAILid)
-            n_trialTable = cleanTABLEt(ismember(cleanTABLEt.trialID,height(respMATT)),:);
+
+            startINDEX = c_trialTable.startTimesA(4) + 1;
+            endINDEX = height(tsTable) - 1;
         else
             n_trialTable = cleanTABLEt(ismember(cleanTABLEt.trialID,uui + 1),:);
+
+            startINDEX = c_trialTable.startTimesA(4) + 1;
+            endINDEX = n_trialTable.startTimesA(1) - 1;
         end
-        startINDEX = c_trialTable.startTimesA(4) + 1;
-        endINDEX = n_trialTable.startTimesA(1) - 1;
+
 
         % Get intervening responses
         interTable = tsTable(startINDEX:endINDEX,:);

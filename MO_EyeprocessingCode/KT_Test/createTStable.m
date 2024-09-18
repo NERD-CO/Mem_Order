@@ -17,7 +17,40 @@ tsTable = table(transpose(messTT),transpose(ttlNum2),transpose(timeStamp1),...
     'VariableNames',{'ELmessage','TTLid','timeStamp'});
 
 %% Fix tsTable
-tsTable = Fix_MemOrder_tsTable(tsTable,behavioR);
+
+% CHECK If TABLE NEEDS to be FIXED
+cushionValue = 3;
+maxTrialHeight = 180*5*cushionValue;
+if height(tsTable) > maxTrialHeight
+
+    tsTable = Fix_MemOrder_tsTable(tsTable,behavioR);
+
+else
+
+    trialID = nan(height(tsTable),1);
+    curTrial = 0;
+    for i = 1:height(tsTable)
+
+        tmpTTLid = tsTable.TTLid(i);
+
+        if ismember(tmpTTLid,[60,61])
+            trialID(i) = nan;
+            continue
+        end
+
+        if tmpTTLid == 11
+            curTrial = curTrial + 1;
+            trialID(i) = curTrial;
+        else
+            trialID(i) = curTrial;
+        end
+
+    end
+
+    tsTable.trialID = trialID;
+
+end
+
 
 %% Modify tsTable to remove extra TTLs
 responseEvents = [111 112 113 114 115 116];

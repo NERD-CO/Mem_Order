@@ -35,7 +35,7 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
     moSessionSall = struct;
 
     %% Loop through sessions
-    for vi = 2:length(all_MOsessions)
+    for vi = 3:length(all_MOsessions)
 
         %% Grab session ID
         mo_sessionID = all_MOsessions{vi};
@@ -85,7 +85,7 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
             ExtractEyeInfo_EL_MO(tmpEye_matFile,respMat);
 
         %% Trial IDs
-        trialID = unique(tsTable.TrialID(tsTable.TrialID ~= 0));
+        trialID = unique(tsTable.trialID(tsTable.trialID ~= 0 & ~isnan(tsTable.trialID)));
 
         %% Create eye epochs
         % JAT added respmat input ----- 9/14/2024
@@ -96,11 +96,11 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
 
         %% Read function and load in new .mat file
         cd(behFolder);
-        [behavFILE_learn] = MO_TxttoMat(moSessionTxtFname,patientID,mo_sessionID, behFolderP);
-        load(behavFILE_learn, 'outData');
-        tmpMOTTL = outData;
-        cd(mainLOC);
-        tmpMOTTLsummary = convertRAW2trial(tmpMOTTL);
+        % [behavFILE_learn] = MO_TxttoMat(moSessionTxtFname,patientID,mo_sessionID, behFolderP);
+        % load(behavFILE_learn, 'outData');
+        % tmpMOTTL = outData;
+        % cd(mainLOC);
+        % tmpMOTTLsummary = convertRAW2trial(tmpMOTTL);
 
         %% Convert respMat respValues
         respMat = convertrespVals(respMat);
