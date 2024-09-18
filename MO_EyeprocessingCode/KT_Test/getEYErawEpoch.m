@@ -123,15 +123,26 @@ for tttrialir = 1:length(trialsOfInt)
             endTS = trialTimes(5,1) + numSampnext;
             clear nexttrialTimes trialTimes
         elseif exist('nexttrialTimes','var') == 1 && exist('prevtrialTimes','var') == 1
-            if trialTimes(1,1) - prevtrialTimes(5,1) <= prevtrial
-                numSampprev = trialTimes(1,1) - prevtrialTimes(5,1) - 1;
-                warning('Eye tracking interval for trial %s overlaps with previous trial. The maximum number of samples you can use is %s.',num2str(tmpOtr),num2str(numSampprev));
-                fprintf('\n');
+            if prevtrialTimes(5,1) ~= 0
+                if trialTimes(1,1) - prevtrialTimes(5,1) <= prevtrial
+                    numSampprev = trialTimes(1,1) - prevtrialTimes(5,1) - 1;
+                    warning('Eye tracking interval for trial %s overlaps with previous trial. The maximum number of samples you can use is %s.',num2str(tmpOtr),num2str(numSampprev));
+                    fprintf('\n');
+                end
+            else
+                fprintf('Trial %d is a bad trial..\n',tttrialir-1);
+                continue
             end
-            if nexttrialTimes(1,1) - trialTimes(5,1) <= nexttrial
-                numSampnext = nexttrialTimes(1,1) - trialTimes(5,1) - 1;
-                warning('Eye tracking interval for trial %s overlaps with next trial. The maximum number of samples you can use is %s.',num2str(tmpOtr),num2str(numSampnext));
-                fprintf('\n');
+
+            if trialTimes(5,1) ~= 0
+                if nexttrialTimes(1,1) - trialTimes(5,1) <= nexttrial
+                    numSampnext = nexttrialTimes(1,1) - trialTimes(5,1) - 1;
+                    warning('Eye tracking interval for trial %s overlaps with next trial. The maximum number of samples you can use is %s.',num2str(tmpOtr),num2str(numSampnext));
+                    fprintf('\n');
+                else
+                    fprintf('Trial %d is a bad trial..\n',tttrialir);
+                    continue
+                end
             end
             startTS = trialTimes(1,1) - numSampprev;
             endTS = trialTimes(5,1) + numSampnext;
