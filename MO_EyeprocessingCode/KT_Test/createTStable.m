@@ -107,7 +107,7 @@ if ~any(ismember(tsTable.TTLid,responseEvents))
         end
 
         %% Add trial ID
-        tsTable.TrialID(idx(i)+1) = tsTable.TrialID(idx(i));
+        tsTable.trialID(idx(i)+1) = tsTable.trialID(idx(i));
 
         %% Add time stamp
         eventTime = (behavioR(i).respTime - behavioR(i).QuesStart)*1000;

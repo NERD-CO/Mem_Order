@@ -83,10 +83,10 @@ for tttrialir = 1:length(trialsOfInt)
             % repopulate response row
 
             % get info from Respmat
-            tmpRESPONSE = respTABLE(tmpOtrTAB.TrialID(1),:);
+            tmpRESPONSE = respTABLE(tmpOtrTAB.trialID(1),:);
             tmpOtrTAB.ELmessage{5} = ['TTL=',num2str(tmpRESPONSE.respValue{1})];
-            tmpOtrTAB.TrialID(5) = tmpOtrTAB.TrialID(1);
-            tmpOtrTAB.timeStamp(5) = round(allRESPONSE(tmpOtrTAB.TrialID(1))*1000) + tmpOtrTAB.timeStamp(4);
+            tmpOtrTAB.trialID(5) = tmpOtrTAB.trialID(1);
+            tmpOtrTAB.timeStamp(5) = round(allRESPONSE(tmpOtrTAB.trialID(1))*1000) + tmpOtrTAB.timeStamp(4);
             tmpOtrTAB.TTLid(5) = tmpRESPONSE.respValue{1};
 
         end
@@ -94,7 +94,7 @@ for tttrialir = 1:length(trialsOfInt)
         diffOFFsets = diff(tmpOtrTAB.timeStamp);
         if diffOFFsets(end) < 20
 
-            tmpOtrTAB.timeStamp(5) = round(allRESPONSE(tmpOtrTAB.TrialID(1))*1000) + tmpOtrTAB.timeStamp(4);
+            tmpOtrTAB.timeStamp(5) = round(allRESPONSE(tmpOtrTAB.trialID(1))*1000) + tmpOtrTAB.timeStamp(4);
 
         end
 
@@ -218,6 +218,8 @@ for tttrialir = 1:length(trialsOfInt)
         rightEYE(tttrialir,:) = right2;
 
     end
+
+    disp(['Finished TRIAL # ',num2str(tttrialir)])
 
 end
 end

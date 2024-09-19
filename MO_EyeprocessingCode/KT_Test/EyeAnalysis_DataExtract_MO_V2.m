@@ -35,7 +35,7 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
     moSessionSall = struct;
 
     %% Loop through sessions
-    for vi = 3:length(all_MOsessions) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    for vi = 1:length(all_MOsessions) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         %% Grab session ID
         mo_sessionID = all_MOsessions{vi};
@@ -119,6 +119,8 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
         outInfo.(task).respMat = respMat;
         outInfo.(task).sacTABLE_Eye0 = sacTABLE_Eye0;
         outInfo.(task).sacTABLE_Eye1 = sacTABLE_Eye1;
+
+        disp(['Finished SESSION # ',num2str(vi)])
 
     end
 
