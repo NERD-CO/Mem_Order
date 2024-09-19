@@ -118,6 +118,8 @@ for tttrialir = 1:length(trialsOfInt)
                 numSampnext = nexttrialTimes(1,1) - trialTimes(5,1) - 1;
                 warning('Eye tracking interval for trial %s overlaps with next trial. The maximum number of samples you can use is %s.',num2str(tmpOtr),num2str(numSampnext));
                 fprintf('\n');
+            else
+                numSampnext = trialTimes(5,1) + nexttrial;
             end
             startTS = trialTimes(1,1) - 20;
             endTS = trialTimes(5,1) + numSampnext;
@@ -128,6 +130,8 @@ for tttrialir = 1:length(trialsOfInt)
                     numSampprev = trialTimes(1,1) - prevtrialTimes(5,1) - 1;
                     warning('Eye tracking interval for trial %s overlaps with previous trial. The maximum number of samples you can use is %s.',num2str(tmpOtr),num2str(numSampprev));
                     fprintf('\n');
+                else
+                    numSampprev = trialTimes(1,1) - prevtrial;
                 end
             else
                 fprintf('Trial %d is a bad trial..\n',tttrialir-1);
@@ -140,9 +144,11 @@ for tttrialir = 1:length(trialsOfInt)
                     warning('Eye tracking interval for trial %s overlaps with next trial. The maximum number of samples you can use is %s.',num2str(tmpOtr),num2str(numSampnext));
                     fprintf('\n');
                 else
-                    fprintf('Trial %d is a bad trial..\n',tttrialir);
-                    continue
+                    numSampnext = trialTimes(5,1) + nexttrial;
                 end
+            else
+                fprintf('Trial %d is a bad trial..\n',tttrialir);
+                continue
             end
             startTS = trialTimes(1,1) - numSampprev;
             endTS = trialTimes(5,1) + numSampnext;
@@ -152,6 +158,8 @@ for tttrialir = 1:length(trialsOfInt)
                 numSampprev = trialTimes(1,1) - prevtrialTimes(5,1) - 1;
                 warning('Eye tracking interval for trial %s overlaps with previous trial. The maximum number of samples you can use is %s.',num2str(tmpOtr),num2str(numSampprev));
                 fprintf('\n');
+            else
+                numSampprev = trialTimes(1,1) - prevtrial;
             end
             startTS = trialTimes(1,1) - numSampprev;
             endTS = trialTimes(5,1) + 20;
