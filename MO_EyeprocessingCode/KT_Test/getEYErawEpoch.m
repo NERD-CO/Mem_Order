@@ -28,7 +28,17 @@ rightEYE = table('Size',[0,size(bothVarNames,1)],...
 %% Convert respMat to table
 respmat = convertrespVals(respmat);
 respTABLE = struct2table(respmat);
-allRESPONSE =respTABLE.respTime - respTABLE.QuesStart;
+
+% trouble shoot whether table has a cell instead of numeric
+if iscell(respTABLE.respTime)
+
+    emptyLoc = cellfun(@(x) isempty(x), respTABLE.respTime , 'UniformOutput',true);
+    respTABLE.respTime{emptyLoc} = NaN;
+    respTABLE.respTime = cell2mat(respTABLE.respTime);
+
+end
+
+allRESPONSE = respTABLE.respTime - respTABLE.QuesStart;
 
 %% Preallocate
 TTL_sInfo = cell(numel(unique(ttlTABLE.trialID(ttlTABLE.trialID ~=0))),1);

@@ -46,6 +46,15 @@ behavioR2 = behavioR;
 behavioR2 = convertrespVals(behavioR2);
 respMATT = struct2table(behavioR2);
 
+% Check respTime if cell or not - added 9/20/2024
+if iscell(respMATT.respTime)
+
+    emptyLoc = cellfun(@(x) isempty(x), respMATT.respTime , 'UniformOutput',true);
+    respMATT.respTime{emptyLoc} = NaN;
+    respMATT.respTime = cell2mat(respMATT.respTime);
+
+end
+
 chkRESPONSE = zeros(numel(uniTRAILid),4);
 for uui = 1:height(respMATT)
 

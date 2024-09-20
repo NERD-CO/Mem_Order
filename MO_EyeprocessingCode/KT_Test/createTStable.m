@@ -136,6 +136,24 @@ else
     quesIDS = cell(1,length(behavioR));
 end
 behTABLE = struct2table(behavioR);
+
+% trouble shoot whether table has a cell instead of numeric
+if iscell(behTABLE.respTime)
+
+    emptyLoc = cellfun(@(x) isempty(x), behTABLE.respTime , 'UniformOutput',true);
+    behTABLE.respTime{emptyLoc} = NaN;
+    behTABLE.respTime = cell2mat(behTABLE.respTime);
+
+end
+
+if iscell(behTABLE.respValue)
+
+    emptyLoc2 = cellfun(@(x) isempty(x), behTABLE.respValue , 'UniformOutput',true);
+    behTABLE.respValue(emptyLoc2) = {nan};
+    behTABLE.respValue = cell2mat(behTABLE.respValue);
+
+end
+
 responTimeSecs = behTABLE.respTime - behTABLE.QuesStart;
 
 %% Create vidQuestable

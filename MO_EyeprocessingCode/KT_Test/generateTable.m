@@ -2,6 +2,19 @@ function outTable = generateTable(respMat,task)
 
 %% function outTable = generateTable(respmat)
 
+% check for missing values and replace with NaNs 09/20/2024
+
+if numel([(respMat(:).respTime)]) ~= length(respMat)
+
+    respMattt = struct2table(respMat);
+    emptyLOCck = cellfun(@(x) isempty(x), respMattt.respTime , 'UniformOutput',true);
+
+    if any(emptyLOCck)
+        respMat(emptyLOCck).respTime = NaN;
+    end
+
+end
+
 %% Grab cross times
 CrossStart = [respMat.CrossStart]';
 CrossEnd = [respMat.CrossEnd]';

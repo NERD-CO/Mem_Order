@@ -124,7 +124,7 @@ for ttIi = 1:numel(taskEVEnts)
     TTLnuMS = 1:numel(TTLIDlocs);
     trialIDtmp(TTLIDlocs) = TTLnuMS;
 end
-tsTable.TrialID = trialIDtmp;
+tsTable.trialID = trialIDtmp;
 
 % trialID = unique(tsTable.TrialID(tsTable.TrialID ~= 0));
 % CLIP ONSET = 2
@@ -133,7 +133,7 @@ tsTable.TrialID = trialIDtmp;
 % % Timestamp, picture name, Trial number, 
 
 clipStime = tsTable.timeStamp(tsTable.TTLid == 2);
-clipStrial = tsTable.TrialID(tsTable.TTLid == 2);
+clipStrial = tsTable.trialID(tsTable.TTLid == 2);
 clipIDS = {behavioR.ClipName};
 
 quesStime = tsTable.timeStamp(tsTable.TTLid == 3);
