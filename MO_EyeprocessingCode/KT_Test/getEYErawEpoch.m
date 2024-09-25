@@ -41,7 +41,7 @@ end
 allRESPONSE = respTABLE.respTime - respTABLE.QuesStart;
 
 %% Preallocate
-TTL_sInfo = cell(numel(unique(ttlTABLE.trialID(ttlTABLE.trialID ~=0))),1);
+TTL_sInfo = cell(numel(unique(ttlTABLE.trialID(ttlTABLE.trialID ~=0 & ~isnan(ttlTABLE.trialID)))),1);
 
 %% Loop through trials
 for tttrialir = 1:length(trialsOfInt)

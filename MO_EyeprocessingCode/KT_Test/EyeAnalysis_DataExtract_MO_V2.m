@@ -29,7 +29,11 @@ function [] = EyeAnalysis_DataExtract_MO_V2(excelLOC , mainLOC, ptID, saveLOC)
     matMOdirlist = dir('*.mat');
     matMOfnames = {matMOdirlist.name};
     matMOfparts = split(matMOfnames,{'_','.'});
-    matMOf_ids = matMOfparts(:,:,3);
+    if ndims(matMOfparts) == 3
+        matMOf_ids = matMOfparts(:,:,3);
+    else
+        matMOf_ids = matMOfparts(3);
+    end
 
     %% Create structure
     moSessionSall = struct;
