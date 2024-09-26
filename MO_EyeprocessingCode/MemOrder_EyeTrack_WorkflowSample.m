@@ -26,6 +26,7 @@ switch getPCname
         excelLocation = 'Z:\Tyner_K_Projects\MEM_ORDER';
         % Data folder location
         dataLocation = 'Z:\Tyner_K_Projects\MEM_ORDER\DataFolder';
+        stimuliLOC = 'Z:Tyner_K_Projects\MEM_ORDER\StimuliFiles';
         % Save locations for Eye data
         % savePreProcLocation = [dataLocation , filesep , 'eyeDATA'];
         % saveCleanLocation = [savePreProcLocation , filesep , 'cleaned_eyeDATA'];
@@ -51,6 +52,7 @@ switch getPCname
         excelLocation = 'Z:\Tyner_K_Projects\MEM_ORDER';
         % Data folder location
         dataLocation = 'Z:\Tyner_K_Projects\MEM_ORDER\DataFolder';
+        stimuliLOC = 'Z:Tyner_K_Projects\MEM_ORDER\StimuliFiles';
         % Save locations for Eye data
         % savePreProcLocation = [dataLocation , filesep , 'eyeDATA'];
         % saveCleanLocation = [savePreProcLocation , filesep , 'cleaned_eyeDATA'];
@@ -60,19 +62,11 @@ switch getPCname
 end
 
 %% STEP 2: Change ptID to be specific to pt 
-ptID = 'MW18'; % issue with 24
+ptID = 'MW18';
 
 %% STEP 3 CONVERT From EDF to MAT
 %Extract_Eye_EDF_MO(excelLocation , dataLocation, ptID)
 clc
-
-%% STEP 4 Run Initial_EyeAnalysis function
-
-% savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
-%     'Eye-tracking\Processed\eyeDATA'];
-% 
-% EyeAnalysis_DataExtract_MO(excelLocation, dataLocation, ptID, savePreProcLocation);
-% clc
 
 %% STEP 4 KT test Initial_EyeAnalysis function
 
@@ -82,17 +76,24 @@ clc
 % EyeAnalysis_DataExtract_MO_V2(excelLocation, dataLocation, ptID, savePreProcLocation);
 % clc
 
-
-%% STEP 5 Run eyeTrackProc funciton ------ CURRENT STEP ON 9/25/2024
-% STEP 5: Run eyeTRACKproc.m f(x) 
+%% STEP 4.1 RUN initial eye position function
 
 savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
     'Eye-tracking\Processed\eyeDATA'];
 
-saveCleanLocation = [dataLocation , filesep ,ptID , filesep ,...
-    'Eye-tracking\Processed\eyeDATA\cleaned_eyeDATA'];
+EyeAnalysis_DataExtract_Gaze_MO(excelLocation, dataLocation, ptID, savePreProcLocation , stimuliLOC);
+clc
 
-eyeTRACKproc_PupilSize_MO(saveCleanLocation, savePreProcLocation, ptID);
+%% STEP 5 Run eyeTrackProc funciton ------ CURRENT STEP ON 9/25/2024
+% STEP 5: Run eyeTRACKproc.m f(x) 
+
+% savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
+%     'Eye-tracking\Processed\eyeDATA'];
+% 
+% saveCleanLocation = [dataLocation , filesep ,ptID , filesep ,...
+%     'Eye-tracking\Processed\eyeDATA\cleaned_eyeDATA'];
+% 
+% eyeTRACKproc_PupilSize_MO(saveCleanLocation, savePreProcLocation, ptID);
 
 %% STEP 5.1 Run GAZE eyeTrackProc funciton
 

@@ -1,20 +1,9 @@
-function [] = EyeAnalysis_DataExtract_MO_Gaze(excelLOC , mainLOC, ptID, saveLOC)
-% 'The events coorespond to the TTL markers for each trial. ', ...
-%     'For the learning trials, the TTL markers are the following: 55 = start of the experiment, ', ...
-%     '1 = stimulus ON, 2 = stimulus OFF, 3 = Question Screen Onset, ', ...
-%     '20 = Yes (21 = NO) during learning, 6 = End of Delay after Response, ', ...
-%     '66 = End of Experiment. For the recognition trials, the TTL markers are the following: ', ...
-%     '55 = start of experiment, 1 = stimulus ON, 2 = stimulus OFF, 3 = Question Screen Onset, ' ...
-%     '31:36 = Confidence (Yes vs. No) response, 66 = End of Experiment'
-
-% Loop through files - determine if learn or retrieve
-
-% learning = [55, 1, 2, 3 20, 21, 6, 66];
-% recog = [55, 1, 2, 3, 31:36, 66];
+function [] = EyeAnalysis_DataExtract_Gaze_MO(excelLOC , mainLOC, ptID, saveLOC, stimLOC)
 
 % Location of variant.xlsx
 cd(excelLOC)
-varTable = readtable('variantLIST.xlsx');
+varTable = readtable('Eye_file_information.xlsx');
+
 % Location of eye tracking folders
 cd(mainLOC)
 [outFOLDS] = getfiles(mainLOC,1,nan);
@@ -26,36 +15,85 @@ tempCASEd = [mainLOC , filesep , outFOLDS{ptIdx}];
 idTab = varTable(matches(varTable.Subject,outFOLDS{ptIdx}),:);
 cd(tempCASEd)
 
-allvars = unique(idTab.Variant);
-variantS = struct;
-for vi = 1:length(allvars)
+% Available MO sessions
+avail_MOsessions = ~matches(idTab.EyeData,'NaN');
+all_MOsessions = idTab.TaskID(avail_MOsessions);
 
-    % Get Variant and Condition
+procFolder = [mainLOC,filesep , ptID, filesep, 'Eye-tracking\Processed'];
+behFolder = [mainLOC,filesep , ptID, filesep, 'Behavioral_Data\Raw'];
+behFolderP = [mainLOC,filesep , ptID, filesep, 'Behavioral_Data\Processed'];
+cd(procFolder)
 
-    variantTAB = idTab(ismember(idTab.Variant,allvars(vi)),:);
-    learn_matFile1 = variantTAB.MatFile{matches(variantTAB.Block,'learn')};
-    learn_matFile = replace(learn_matFile1,'eyetrack','eyetrackELF');
+% Get data files
+matMOdirlist = dir('*.mat');
+matMOfnames = {matMOdirlist.name};
+matMOfparts = split(matMOfnames,{'_','.'});
+if ndims(matMOfparts) == 3
+    matMOf_ids = matMOfparts(:,:,3);
+else
+    matMOf_ids = matMOfparts(3);
+end
 
-    % Load in relevant Picture VARIANT folder
-    switch variantTAB.Variant(1)
-        case 1
-            imageLOC = 'D:\Dropbox\LearningRecognitionECoG\Stimuli\newolddelay';
-        case 2
-            imageLOC = 'D:\Dropbox\LearningRecognitionECoG\Stimuli\newolddelay2';
-        case 3
-            imageLOC = 'D:\Dropbox\LearningRecognitionECoG\Stimuli\newolddelay3';
+for vi = 1:length(all_MOsessions)
+
+    % Grab session ID
+    mo_sessionID = all_MOsessions{vi};
+
+    % Patient answers - need to change per pt - can add input arg for pt file
+    cd(behFolder); % Used to create variable 'outData' with TTL values
+
+    % Convert behavioral text files to mat files
+    matLIST1 = dir('*.mat');
+    matLIST2 = {matLIST1.name};
+    switch mo_sessionID
+        case 'en'
+            moSessionMatFname = matLIST2{contains(matLIST2,'encoding')};
+        case 'sc'
+            moSessionMatFname = matLIST2{contains(matLIST2,'scene')};
+        case 'ti'
+            moSessionMatFname = matLIST2{contains(matLIST2,'timeDiscrim')};
     end
 
+    % Load in relevant Picture VARIANT folder
+    switch mo_sessionID
+        case 'en'
+            imageLOC = [stimLOC , filesep , 'A02_Clips'];
+        case 'sc'
+            imageLOC = [stimLOC , filesep , 'B01_SceneRecogImg'];
+        case 'ti'
+            imageLOC = [stimLOC , filesep , 'C01_TimeDisImg'];
+    end
 
-    [tsT_L, picT_L, eye0raw_L , ~ , eye1raw_L, ~, allRAWgxgy_L] = ExtractEyeInfo_EL(learn_matFile);
+    % Load respmat
+    respMat = load(moSessionMatFname);
 
-    picT_L = getPICinfo(picT_L);
-    tsT_L = getTRIinfo(tsT_L);
+    fieldNames = fieldnames(respMat);
+    matchedNames = cell(length(fieldNames),1);
+    for ii = 1:length(fieldNames)
+        if contains(fieldNames{ii,1},'respMat')
+            matchedNames{ii,1} = fieldNames{ii,1};
+        end
+    end
 
-    trialID_L = unique(tsT_L.TrialID(tsT_L.TrialID ~= 0));
+    matchedNames = matchedNames(~cellfun('isempty',matchedNames));
+    respMat = respMat.(matchedNames{1,1});
 
-    [leftEYE_Learn , rightEYE_Learn , learnTTLinfo] = getEYErawEpoch(allRAWgxgy_L ,...
-        tsT_L , trialID_L , picT_L , imageLOC);
+    % Get eye data
+    cd(procFolder)
+    tmpEye_matFile = matMOfnames{matches(matMOf_ids,mo_sessionID)};
+    [tsTable,vidQtable, ~ , ~ , ~, ~, allRAWgxgy_L] =...
+        ExtractEyeInfo_EL_MO(tmpEye_matFile,respMat);
+
+    vidQtable.PicLocation = repmat({imageLOC},height(vidQtable),1);
+
+    vidQtable = getPICinfo_MO(vidQtable);
+    % tsT_L = getTRIinfo(tsT_L);
+
+    % Trial IDs
+    trialID = unique(tsTable.trialID(tsTable.trialID ~= 0 & ~isnan(tsTable.trialID)));
+
+    [leftEYE_Learn , rightEYE_Learn , learnTTLinfo] = getEYErawEpoch_GAZE_MO(allRAWgxgy_L ,...
+        tsTable , trialID , vidQtable , imageLOC, 500, 500 , respMat);
 
     % Patient answers - need to change per pt - can add input arg for pt file
     cd(tempCASEd); % Used to create variable 'outData' with TTL values
@@ -84,80 +122,7 @@ for vi = 1:length(allvars)
     cd(excelLOC)
     load('newOld_stimID_all.mat','stimAll');
 
-    % add in compareAns code here
-    % Extract variables for ground truth old vs new- 1=present in learn block
-    groundTruthRecog_var1 = stimAll.stimNewOld_var1;
-    groundTruthRecog_var2 = stimAll.stimNewOld_var2;
-    groundTruthRecog_var3 = stimAll.stimNewOld_var3;
 
-    % Patient answers - need to change per pt - can add input arg for pt file
-    cd(tempCASEd); % Used to create variable 'outData' with TTL values
-
-    % Convert behavioral txt files to mat files
-    recogTXT = variantTAB.Behavior{matches(variantTAB.Block,'recog')};
-
-    % Recog file
-    block = 'recog'; %Will be either 'learn' or 'recog'
-    patientID = idTab.Subject{1};
-
-    % Run function and load in new .mat file
-    [behavFILE_recog] = NewOldTxttoMat_v2(recogTXT,patientID,vi,block, tempCASEd);
-    load(behavFILE_recog, 'outData') %loc and file name as input
-    recogTTL = outData;
-    cd(mainLOC);
-    recogTTLsummary = convertRAW2trial(recogTTL);
-
-    % Extract answers from outData - 31:36 = Confidence (Yes vs. No) response
-    % 31,32,33=no,new & 34,35,36=yes,old
-    ttlValues = str2double(recogTTL.taskinformation.TTLvalue);
-    confRatings = ttlValues(ttlValues(:,1) >= 31 & ttlValues(:,1) <= 36,:);
-
-    % Logical array of confRatings: GREATER than 34
-    confRatings_logical = logical(confRatings >= 34); %1=yes,old & 0=no,new
-
-    confVal_1 = logical(confRatings == 31); %1=31, 0= not 31
-    confVal_2 = logical(confRatings == 32); %1=32, 0= not 32
-    confVal_3 = logical(confRatings == 33); %1=33, 0= not 33
-    confVal_4 = logical(confRatings == 34); %1=34, 0= not 34
-    confVal_5 = logical(confRatings == 35); %1=35, 0= not 35
-    confVal_6 = logical(confRatings == 36); %1=36, 0= not 36
-
-    confVal_34 = logical(confRatings == 33 | confRatings == 34); %1=33-34, 0=not 33-34
-    confVal_12 = logical(confRatings == 31 | confRatings == 32); %1=31-32, 0=not 31-32
-    confVal_56 = logical(confRatings == 35 | confRatings == 36); %1=35-36, 0=not 35-36
-    confVal_1256 = ~logical(confVal_34);                         %1=31+32+35+36, 0=33+34
-    confVal_16 = logical(confRatings == 31 | confRatings == 36); %1=31+36, 0=32+33+34+35
-
-    % Can compare ground truth to patient answers
-    % 1=yes,old & 0=no,new
-    % Combine arrays into a table
-    switch allvars(vi)
-        case 1
-            groundTruthRecog = groundTruthRecog_var1;
-        case 2
-            groundTruthRecog = groundTruthRecog_var2;
-        case 3
-            groundTruthRecog = groundTruthRecog_var3;
-    end
-
-    % CONSIDER RE-NAMING RECOG INFO
-    recogINFO = table(confRatings, yesNoLearn , confRatings_logical, groundTruthRecog, ...
-        confVal_1, confVal_2, confVal_3, confVal_4, confVal_5, confVal_6,...
-        confVal_34, confVal_12, confVal_56, confVal_1256, confVal_16, 'VariableNames', ...
-        {'RecogResp','LearnResp','confRatings', 'groundTruth', 'New_sure', 'New_less_sure', 'New_unsure',...
-        'Old_unsure', 'Old_less_sure', 'Old_sure', 'All_unsure', ...
-        'New_sureLess_sure', 'Old_sureLess sure', 'All_sureLess_sure', 'All_sure'});
-
-    cd(tempCASEd)
-    recog_matFile1 = variantTAB.MatFile{matches(variantTAB.Block,'recog')};
-    recog_matFile = replace(recog_matFile1,'eyetrack','eyetrackELF');
-
-    [tsT_R, picT_R, eye0raw_R , ~ , eye1raw_R, ~, allRAWgxgy_R] = ExtractEyeInfo_EL(recog_matFile);
-
-    picT_R = getPICinfo(picT_R);
-    tsT_R = getTRIinfo(tsT_R);
-
-    trialID_R = unique(tsT_R.TrialID(tsT_R.TrialID ~= 0));
 
     [leftEYE_Recog , rightEYE_Recog , recogTTLinfo] = getEYErawEpoch(allRAWgxgy_R ,...
         tsT_R , trialID_R , picT_R , imageLOC);
@@ -206,57 +171,36 @@ end
 end
 
 
-% Pic info
-function [picINFOtab] = getPICinfo(inTable)
 
-picLOCa = inTable.PicLocation;
-fparTs = split(picLOCa,'\');
-catID = fparTs(:,11);
-% catSubn = cellfun(@(x) str2double(x(1)), numCAT, 'UniformOutput',true);
-% catID = cellfun(@(x) x(2:end), numCAT, 'UniformOutput',false);
-picJPG = inTable.Picture;
-picNUMs = cellfun(@(x) split(x,'.'), picJPG, 'UniformOutput',false);
-picNUM = cellfun(@(x) str2double(x{1}), picNUMs, 'UniformOutput',true);
-picINFOtab = inTable;
-picINFOtab.CatID = catID;
-picINFOtab.PicNUM = picNUM;
 
-% tmpCombine = cell(length(catSubn),1);
-% for pi = 1:length(catSubn)
-%     tmpCombine{pi} = [num2str(catSubn(pi)),'.',num2str(picNUM(pi))];
+% 
+% % Trial info
+% function [trialINFOtab] = getTRIinfo(inTable)
+% 
+% ttlIDt = inTable.TTLid;
+% 
+% ttltrialID = zeros(length(ttlIDt),1);
+% trialcount = 0;
+% for ti = 1:length(ttltrialID)
+%     tmpT = ttlIDt(ti);
+%     if tmpT == 1
+%         trialcount = trialcount + 1;
+%         ttltrialID(ti) = trialcount;
+%     else
+%         ttltrialID(ti) = trialcount;
+%     end
+% 
 % end
-% picINFOtab.CatPICid = tmpCombine;
-
-end
-
-
-% Trial info
-function [trialINFOtab] = getTRIinfo(inTable)
-
-ttlIDt = inTable.TTLid;
-
-ttltrialID = zeros(length(ttlIDt),1);
-trialcount = 0;
-for ti = 1:length(ttltrialID)
-    tmpT = ttlIDt(ti);
-    if tmpT == 1
-        trialcount = trialcount + 1;
-        ttltrialID(ti) = trialcount;
-    else
-        ttltrialID(ti) = trialcount;
-    end
-
-end
-
-% start and end
-ttltrialID(ttlIDt == 55) = 0;
-ttltrialID(ttlIDt == 66) = 0;
-
-trialINFOtab = inTable;
-trialINFOtab.TrialID = ttltrialID;
-
-
-end
+% 
+% % start and end
+% ttltrialID(ttlIDt == 55) = 0;
+% ttltrialID(ttlIDt == 66) = 0;
+% 
+% trialINFOtab = inTable;
+% trialINFOtab.TrialID = ttltrialID;
+% 
+% 
+% end
 
 
 

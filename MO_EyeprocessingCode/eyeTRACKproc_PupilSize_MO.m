@@ -39,22 +39,23 @@ sessSfieldN = fieldnames(outInfo);
 
 for i = 1:sessSnum
 
+    switch sessSfieldN{i}
+        case 'encoding'
+            % curTTLtable = outInfo.(sessSfieldN{i}).TTLinfo;
+            % Clean up check
+            % curTTLtable = curTTLtable(cellfun(@(x) ~isempty(x), curTTLtable , 'UniformOutput',true));
+            outInfo.(sessSfieldN{i}).TTLinfo = outInfo.(sessSfieldN{i}).TTLinfo(1:90);
+        case 'sceneRecog'
+            outInfo.(sessSfieldN{i}).TTLinfo = outInfo.(sessSfieldN{i}).TTLinfo(1:180);
+        case 'timeD'
+            outInfo.(sessSfieldN{i}).TTLinfo = outInfo.(sessSfieldN{i}).TTLinfo(1:90);
+    end
+
     % Loop through each eye in session
     for eyE = 1:2
 
-        % FOR ERROR CHECKING
-        % disp(eyE)
-
         switch eyE
-            case 1
-                % curSession = outInfo.(sessSfieldN{i}).leftEYE;
-                curTTLtable = outInfo.(sessSfieldN{i}).TTLinfo;
-
-                % Clean up check
-                curTTLtable = curTTLtable(cellfun(@(x) ~isempty(x), curTTLtable , 'UniformOutput',true));
-
-                outInfo.(sessSfieldN{i}).TTLinfo = curTTLtable;
-
+            case 1 % LEFT EYE
                 % Get mean
                 outInfo.(sessSfieldN{i}).leftEYE.oT_pupilS_meanCl =...
                     cleanPSmean(outInfo.(sessSfieldN{i}).leftEYE.oT_pupilS_mean);
@@ -63,30 +64,20 @@ for i = 1:sessSnum
                     cleanEyeProcBF(outInfo.(sessSfieldN{i}).leftEYE.oT_pupilS_raw,0,...
                     outInfo.(sessSfieldN{i}).TTLinfo);
 
-            case 2
-                curSession = outInfo.(sessSfieldN{i}).rightEYE;
+            case 2 % RIGHT EYE
+                % Get mean
+                outInfo.(sessSfieldN{i}).rightEYE.oT_pupilS_meanCl =...
+                    cleanPSmean(outInfo.(sessSfieldN{i}).rightEYE.oT_pupilS_mean);
 
-                curSession.oT_pupilS_meanCl =...
-                    cleanPSmean(curSession.oT_pupilS_mean);
-
-                curSession.oT_pupilS_rawCL =...
-                    cleanEyeProcBF(curSession.oT_pupilS_raw,0,...
-                    curSession.LearnTTLplus);
-
-        end
-
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Save cleaned data into variantS
-        variantS.(sessSfieldN{i}).dataTable = curSession;
-
-    end
-
-end
+                % Insert Nans in missing pupil values
+                outInfo.(sessSfieldN{i}).rightEYE.oT_pupilS_rawCL =...
+                    cleanEyeProcBF(outInfo.(sessSfieldN{i}).rightEYE.oT_pupilS_raw,0,...
+                    outInfo.(sessSfieldN{i}).TTLinfo);
+        end % End of switch case
+    end % End of Eye Loop
+end % End of Session Loop
 cd(cleanedDataLOC);
-save(saveFile_name1, 'variantS');
-%end
-
+save(saveFile_name1, 'outInfo','-v7.3');
 
 
 end
@@ -129,15 +120,22 @@ end
 % PRE STEP 2 - SUPER outlier TRIALS IN LENGTH
 for tsI = 1:height(oldRAW)
 
-    tmpTrace = oldRAW{tsI};
-    tmpTTL = TTLtable{tsI}.ELNKint(5);
+    disp(['Trial analysis begin ', num2str(tsI)])
 
-    if tmpTTL > 9000
-        tmpTrace(5001:end) = nan;
-    else 
-        tmpTrace(tmpTTL + 500:end) = nan;
+    tmpTrace = oldRAW{tsI};
+    if isempty(tmpTrace)
+        oldRAW{tsI} = NaN;
+        continue
+    else
+        tmpTTL = TTLtable{tsI}.ELNKint(5);
+
+        if tmpTTL > 9000
+            tmpTrace(5001:end) = nan;
+        else
+            tmpTrace(tmpTTL + 500:end) = nan;
+        end
+        oldRAW{tsI} = tmpTrace;
     end
-    oldRAW{tsI} = tmpTrace;
 end
 
 
