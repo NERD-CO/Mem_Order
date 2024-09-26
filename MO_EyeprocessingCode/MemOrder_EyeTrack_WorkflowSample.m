@@ -53,6 +53,7 @@ switch getPCname
         % Data folder location
         dataLocation = 'Z:\Tyner_K_Projects\MEM_ORDER\DataFolder';
         stimuliLOC = 'Z:Tyner_K_Projects\MEM_ORDER\StimuliFiles';
+        addpath(genpath('Z:\Tyner_K_Projects\MEM_ORDER\StimuliFiles'))
         % Save locations for Eye data
         % savePreProcLocation = [dataLocation , filesep , 'eyeDATA'];
         % saveCleanLocation = [savePreProcLocation , filesep , 'cleaned_eyeDATA'];
