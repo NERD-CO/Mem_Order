@@ -86,61 +86,37 @@ for vi = 1:length(all_MOsessions)
 
     vidQtable.PicLocation = repmat({imageLOC},height(vidQtable),1);
 
-    vidQtable = getPICinfo_MO(vidQtable);
+    vidQtable = getPICinfo_MO(vidQtable,mo_sessionID);
     % tsT_L = getTRIinfo(tsT_L);
 
     % Trial IDs
     trialID = unique(tsTable.trialID(tsTable.trialID ~= 0 & ~isnan(tsTable.trialID)));
 
-    [leftEYE_Learn , rightEYE_Learn , learnTTLinfo] = getEYErawEpoch_GAZE_MO(allRAWgxgy_L ,...
-        tsTable , trialID , vidQtable , imageLOC, 500, 500 , respMat);
+    [leftEYE , rightEYE , TTLinfo] = getEYErawEpoch_GAZE_MO(allRAWgxgy_L ,...
+        tsTable , trialID , vidQtable , imageLOC, 500, 500 , respMat , mo_sessionID);
 
-    % Patient answers - need to change per pt - can add input arg for pt file
-    cd(tempCASEd); % Used to create variable 'outData' with TTL values
+    % Convert respMat respValues
+    respMat = convertrespVals(respMat);
 
-    % Convert behavioral txt files to mat files
-    learnTXT = variantTAB.Behavior{matches(variantTAB.Block,'learn')};
+    % Create table
+    task = extractBefore(extractAfter(moSessionMatFname,'_'),'.');
+    outTable = generateTable(respMat,task);
 
-    % Recog file
-    block = 'learn'; %Will be either 'learn' or 'recog'
-    patientID = idTab.Subject{1};
+    %% Add to structure
+    outInfo.(task).table = outTable;
+    outInfo.(task).leftEYE = leftEYE;
+    outInfo.(task).rightEYE = rightEYE;
+    outInfo.(task).tsTable = tsTable;
+    outInfo.(task).TTLinfo = TTLinfo;
+    outInfo.(task).vidQtable = vidQtable;
+    outInfo.(task).respMat = respMat;
 
-    % Run function and load in new .mat file
-    [behavFILE_learn] = NewOldTxttoMat_v2(learnTXT,patientID,vi,block, tempCASEd);
-    load(behavFILE_learn, 'outData') %loc and file name as input
-    learnTTL = outData;
-    cd(mainLOC);
-    learnTTLsummary = convertRAW2trial(learnTTL);
-
-    ttlValuesLearn = learnTTL.taskinformation.TTLvalue;
-    yesNoLearn = ttlValuesLearn(matches(ttlValuesLearn,{'20','21'}));
-
-
-    % RECOGNITION PROCESSING ----------------------------------------------
-
-    % load in information for image paths and whether new/old in recog
-    cd(excelLOC)
-    load('newOld_stimID_all.mat','stimAll');
-
-
-
-    [leftEYE_Recog , rightEYE_Recog , recogTTLinfo] = getEYErawEpoch(allRAWgxgy_R ,...
-        tsT_R , trialID_R , picT_R , imageLOC);
-
-    % ADD SUMMARY TTLs , ADD learnYES_NO
-    [outTABLE] = fixANDcombineTables(leftEYE_Learn,rightEYE_Learn,leftEYE_Recog,...
-        rightEYE_Recog , picT_L, picT_R, learnTTLsummary, recogTTLsummary,...
-        learnTTLinfo, recogTTLinfo , recogINFO);
-
-    varianTNum = ['var',num2str(allvars(vi))];
-
-    variantS.(varianTNum).dataTable = outTABLE;
 
 end
 % subject
-saveFname = ['eyeDataGAZE_',outFOLDS{ptIdx},'.mat'];
+saveFname = ['eyeDataGAZE_',ptID,'.mat'];
 cd(saveLOC)
-save(saveFname,"variantS");
+save(saveFname,"outInfo",'-v7.3');
 
 
 %end

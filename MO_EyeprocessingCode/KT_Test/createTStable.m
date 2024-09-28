@@ -135,6 +135,14 @@ if isfield(behavioR,'QuesName') % Encode
 else
     quesIDS = cell(1,length(behavioR));
 end
+
+if isfield(behavioR,'FrameOrder')
+    framORDER = {behavioR.FrameOrder};
+else
+    framORDER = cell(1,length(behavioR));
+end
+
+
 behTABLE = struct2table(behavioR);
 
 % trouble shoot whether table has a cell instead of numeric
@@ -156,10 +164,12 @@ end
 
 responTimeSecs = behTABLE.respTime - behTABLE.QuesStart;
 
+
+
 %% Create vidQuestable
 vidQuestable = table(clipStrial ,clipStime,transpose(clipIDS), quesStime ,...
     transpose(quesIDS),...
-    responTimeSecs,'VariableNames',{'TrialNum','ClipTstamp','ClipName',...
-    'QuestTstamp','QuestName','ResponseSecs'});
+    responTimeSecs,transpose(framORDER),'VariableNames',{'TrialNum','ClipTstamp','ClipName',...
+    'QuestTstamp','QuestName','ResponseSecs','FrameORDER'});
 
 end

@@ -26,12 +26,11 @@ switch getPCname
         excelLocation = 'Z:\Tyner_K_Projects\MEM_ORDER';
         % Data folder location
         dataLocation = 'Z:\Tyner_K_Projects\MEM_ORDER\DataFolder';
-        stimuliLOC = 'Z:Tyner_K_Projects\MEM_ORDER\StimuliFiles';
+        stimuliLOC = 'Z:\Tyner_K_Projects\MEM_ORDER\StimuliFiles';
         % Save locations for Eye data
         % savePreProcLocation = [dataLocation , filesep , 'eyeDATA'];
         % saveCleanLocation = [savePreProcLocation , filesep , 'cleaned_eyeDATA'];
         cd(codeLocation)
-    case 'MLD'
 
     case 'NERDCO-POSTDOC' %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Code location
@@ -52,7 +51,7 @@ switch getPCname
         excelLocation = 'Z:\Tyner_K_Projects\MEM_ORDER';
         % Data folder location
         dataLocation = 'Z:\Tyner_K_Projects\MEM_ORDER\DataFolder';
-        stimuliLOC = 'Z:Tyner_K_Projects\MEM_ORDER\StimuliFiles';
+        stimuliLOC = 'Z:\Tyner_K_Projects\MEM_ORDER\StimuliFiles';
         addpath(genpath('Z:\Tyner_K_Projects\MEM_ORDER\StimuliFiles'))
         % Save locations for Eye data
         % savePreProcLocation = [dataLocation , filesep , 'eyeDATA'];
@@ -63,7 +62,7 @@ switch getPCname
 end
 
 %% STEP 2: Change ptID to be specific to pt 
-ptID = 'MW18';
+ptID = 'MW18'; %MW25
 
 %% STEP 3 CONVERT From EDF to MAT
 %Extract_Eye_EDF_MO(excelLocation , dataLocation, ptID)
@@ -77,15 +76,15 @@ clc
 % EyeAnalysis_DataExtract_MO_V2(excelLocation, dataLocation, ptID, savePreProcLocation);
 % clc
 
-%% STEP 4.1 RUN initial eye position function
+%% STEP 4.1 RUN initial eye position function ------ CURRENT STEP ON 9/27/2024
 
-savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
-    'Eye-tracking\Processed\eyeDATA'];
+% savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
+%     'Eye-tracking\Processed\eyeDATA'];
+% 
+% EyeAnalysis_DataExtract_Gaze_MO(excelLocation, dataLocation, ptID, savePreProcLocation , stimuliLOC);
+% clc
 
-EyeAnalysis_DataExtract_Gaze_MO(excelLocation, dataLocation, ptID, savePreProcLocation , stimuliLOC);
-clc
-
-%% STEP 5 Run eyeTrackProc funciton ------ CURRENT STEP ON 9/25/2024
+%% STEP 5 Run eyeTrackProc funciton ------ DONE
 % STEP 5: Run eyeTRACKproc.m f(x) 
 
 % savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...

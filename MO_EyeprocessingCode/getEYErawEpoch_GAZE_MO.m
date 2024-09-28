@@ -1,6 +1,6 @@
 function [leftEYE , rightEYE , TTL_sInfo] =...
     getEYErawEpoch_GAZE_MO(rawTIME, ttlTABLE, trialsOfInt,...
-    picTABLE , picLOCation, prevtrial, nexttrial , respmat)
+    picTABLE , picLOCation, prevtrial, nexttrial , respmat , SessionTYPE)
 
 
 %% Make N by 2 matrix of fieldname + value type
@@ -202,14 +202,35 @@ for tttrialir = 1:length(trialsOfInt)
         TTL_sInfo{tttrialir} = tmpTable;
 
         %% load in first image of screen / image / or pairs of images
-        % May need to separate out ENcoding, SCeneRe, 
-        picID = [picLOCation , filesep , picTABLE.ClipName{tttrialir}];
+        % May need to separate out ENcoding, SCeneRe, and time Disc
+        % picID = [picLOCation , filesep , picTABLE.ClipName{tttrialir}];
 
-        [xPictBnds , yPictBnds] = getPICtureDims_MO(picLOCation ,  picTABLE.ClipName{tttrialir});
+        [xPictBnds , yPictBnds] = getPICtureDims_MO(picLOCation, picTABLE, tttrialir, SessionTYPE);
+
+        % GET EYE INFO
+        % EYE 1
+        pos_1eye_raw = [tsBlk_OUT.GX_0 , tsBlk_OUT.GY_0];
+        pos_1eyeC_raw = cleanUPpos_MO(pos_1eye_raw , 1);
+        % IN SCREEN
+        pos_1eye_InFr_ind = cleanUPpos_MO(pos_1eye_raw,2);
+        % IN Picture
+        pos_1eye_InPic_ind = cleanUPpos_MO(pos_1eye_raw,3,xPictBnds,yPictBnds);
+
+        % EYE 2
+        pos_2eye_raw = [tsBlk_OUT.GX_1 , tsBlk_OUT.GY_1];
+        pos_2eyeC_raw = cleanUPpos_MO(pos_2eye_raw,1);
+        % IN SCREEN
+        pos_2eye_InFr_ind = cleanUPpos_MO(pos_2eye_raw,2);
+        % IN Picture
+        pos_2eye_InPic_ind = cleanUPpos_MO(pos_2eye_raw,3,xPictBnds,yPictBnds);
 
 
         %% Create eye table
-        [left1 , right2] = createEYEtable(double(pupilS_1),double(pupilS_2),pos_1c,pos_2c);
+        [left1 , right2] = createEYEtable_MO_GAZE(pos_1eyeC_raw,pos_2eyeC_raw,...
+            pos_1eye_InFr_ind,pos_2eye_InFr_ind,pos_1eye_InPic_ind,...
+            pos_2eye_InPic_ind,tsBlk_OUT.Time);
+
+        % [left1 , right2] = createEYEtable(double(pupilS_1),double(pupilS_2),pos_1c,pos_2c);
 
         %% Add to table
         leftEYE(tttrialir,:) = left1;
