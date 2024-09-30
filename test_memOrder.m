@@ -15,7 +15,7 @@ method = ["granger"]; % "granger", "coherence"
 lfreq = 0.5;
 
 %% Test folder
-folderDir = 'Z:\Tyner_K_Projects\MEM_ORDER\DataFolder\MW30\'; % 30, 27, 26, 25, 24, 23, 22, 21, 20, 19
+folderDir = 'Z:\Tyner_K_Projects\MEM_ORDER\DataFolder\MW19\'; % 30, 27, 26, 25, 24, 23, 22, 21, 20, 19
 
 %% Construct object
 obj = memOrder(folderDir);
@@ -54,10 +54,10 @@ computePower(obj,freq);
 computeStats(obj);
 
 %% Functional connectivity
-functionalConnectivity(obj,method);
+%functionalConnectivity(obj,method);
 
 %% Analyze significant changes in FC
-analyzeFC(obj,boundary);
+%analyzeFC(obj,boundary);
 
 %% SPOOOF
 SPOOOF(obj,0.5,250);

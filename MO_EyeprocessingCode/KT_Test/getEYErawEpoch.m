@@ -145,7 +145,8 @@ for tttrialir = 1:length(trialsOfInt)
                 end
             else
                 fprintf('Trial %d is a bad trial..\n',tttrialir-1);
-                continue
+                numSampprev = 5; % Take 5 samples prior to trial onset %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %continue
             end
 
             if trialTimes(5,1) ~= 0
@@ -158,7 +159,8 @@ for tttrialir = 1:length(trialsOfInt)
                 end
             else
                 fprintf('Trial %d is a bad trial..\n',tttrialir);
-                continue
+                numSampnext = 5; % Take 5 samples after trial offset %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %continue
             end
             startTS = trialTimes(1,1) - numSampprev;
             endTS = trialTimes(5,1) + numSampnext;
