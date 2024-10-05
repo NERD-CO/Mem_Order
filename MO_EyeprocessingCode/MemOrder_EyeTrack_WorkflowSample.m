@@ -62,7 +62,7 @@ switch getPCname
 end
 
 %% STEP 2: Change ptID to be specific to pt 
-ptID = 'MW18'; %MW25
+ptID = 'MW26'; %MW26
 
 %% STEP 3 CONVERT From EDF to MAT
 %Extract_Eye_EDF_MO(excelLocation , dataLocation, ptID)
@@ -76,7 +76,7 @@ clc
 % EyeAnalysis_DataExtract_MO_V2(excelLocation, dataLocation, ptID, savePreProcLocation);
 % clc
 
-%% STEP 4.1 RUN initial eye position function ------ CURRENT STEP ON 9/27/2024
+%% STEP 4.1 RUN initial eye position function 
 
 % savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
 %     'Eye-tracking\Processed\eyeDATA'];
@@ -95,7 +95,7 @@ clc
 % 
 % eyeTRACKproc_PupilSize_MO(saveCleanLocation, savePreProcLocation, ptID);
 
-%% STEP 5.1 Run GAZE eyeTrackProc funciton
+%% STEP 5.1 Run GAZE eyeTrackProc funciton ------ CURRENT STEP ON 10/4/2024
 
 savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
     'Eye-tracking\Processed\eyeDATA'];
