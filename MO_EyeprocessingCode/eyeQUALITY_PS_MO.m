@@ -22,20 +22,20 @@ eyeData_pt = append('cl_eyeData_', ptID,'.mat');
 tempFile_name = eyeData_pt;
 
 % Load in file
-load(tempFile_name, 'variantS');
+load(tempFile_name, 'outInfo');
 
 % Set tempEye- loop through every eye in every variant within variantS
 % Go into variantS and determine # variants there
-varSnum = length(fieldnames(variantS));
+sessSnum = length(fieldnames(outInfo));
 
 % Other option: Extract field names of variantS ahead of time
-varSfieldN = fieldnames(variantS);
+sessSfieldN = fieldnames(outInfo);
 % Extract field names of each variant in variantS
 
-for i = 1:varSnum
+for i = 1:sessSnum
 
     % name of variant
-    curVariant = variantS.(varSfieldN{i}).dataTable;
+    curSession = outInfo.(sessSfieldN{i});
 
     for eyE = 1:4
 
@@ -44,17 +44,11 @@ for i = 1:varSnum
 
         switch eyE
             case 1
-                titleINFO = [varSfieldN{i} , ' Left Learn'];
-                plotQLE(curVariant.Left_L_oT_pupilS_rawCL,[1 0 0],titleINFO);
+                titleINFO = [sessSfieldN{i} , ' Left Eye'];
+                plotQLE(curSession.leftEYE.oT_pupilS_rawCL,[1 0 0],titleINFO);
             case 2
-                titleINFO = [varSfieldN{i} , ' Left Recog'];
-                plotQLE(curVariant.Left_R_oT_pupilS_rawCL,[0 0 0],titleINFO);
-            case 3
-                titleINFO = [varSfieldN{i} , ' Right Learn'];
-                plotQLE(curVariant.Right_L_oT_pupilS_rawCL,[0 0 1],titleINFO);
-            case 4
-                titleINFO = [varSfieldN{i} , ' Right Recog'];
-                plotQLE(curVariant.Right_R_oT_pupilS_rawCL,[0 1 0],titleINFO);
+                titleINFO = [sessSfieldN{i} , ' Right Eye'];
+                plotQLE(curSession.rightEYE.oT_pupilS_rawCL,[0 0 0],titleINFO);
 
         end
     end
