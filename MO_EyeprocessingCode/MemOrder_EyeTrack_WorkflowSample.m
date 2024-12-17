@@ -68,32 +68,32 @@ ptID = 'MW26'; %MW26
 %Extract_Eye_EDF_MO(excelLocation , dataLocation, ptID)
 clc
 
-%% STEP 4 KT test Initial_EyeAnalysis function
+%% STEP 4 KT test Initial_EyeAnalysis function %% originally commented out
 
-% savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
-%     'Eye-tracking\Processed\eyeDATA'];
-% 
-% EyeAnalysis_DataExtract_MO_V2(excelLocation, dataLocation, ptID, savePreProcLocation);
-% clc
+savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
+    'Eye-tracking\Processed\eyeDATA'];
 
-%% STEP 4.1 RUN initial eye position function 
+EyeAnalysis_DataExtract_MO_V2(excelLocation, dataLocation, ptID, savePreProcLocation);
+clc
 
-% savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
-%     'Eye-tracking\Processed\eyeDATA'];
-% 
-% EyeAnalysis_DataExtract_Gaze_MO(excelLocation, dataLocation, ptID, savePreProcLocation , stimuliLOC);
-% clc
+%% STEP 4.1 RUN initial eye position function %% Originally commented out
 
-%% STEP 5 Run eyeTrackProc funciton ------ DONE
+savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
+    'Eye-tracking\Processed\eyeDATA'];
+
+EyeAnalysis_DataExtract_Gaze_MO(excelLocation, dataLocation, ptID, savePreProcLocation , stimuliLOC);
+clc
+
+%% STEP 5 Run eyeTrackProc funciton ------ DONE %% Originally commented out
 % STEP 5: Run eyeTRACKproc.m f(x) 
 
-% savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
-%     'Eye-tracking\Processed\eyeDATA'];
-% 
-% saveCleanLocation = [dataLocation , filesep ,ptID , filesep ,...
-%     'Eye-tracking\Processed\eyeDATA\cleaned_eyeDATA'];
-% 
-% eyeTRACKproc_PupilSize_MO(saveCleanLocation, savePreProcLocation, ptID);
+savePreProcLocation = [dataLocation , filesep ,ptID , filesep ,...
+    'Eye-tracking\Processed\eyeDATA'];
+
+saveCleanLocation = [dataLocation , filesep ,ptID , filesep ,...
+    'Eye-tracking\Processed\eyeDATA\cleaned_eyeDATA'];
+
+eyeTRACKproc_PupilSize_MO(saveCleanLocation, savePreProcLocation, ptID);
 
 %% STEP 5.1 Run GAZE eyeTrackProc funciton ------ CURRENT STEP ON 10/4/2024
 

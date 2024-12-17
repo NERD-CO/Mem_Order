@@ -83,7 +83,7 @@ switch getPCname
 end
 
 %% STEP 2: Change ptID to be specific to pt 
-ptID = 'MW25'; % 18, issue with 24; 23
+ptID = 'MW21'; % Issues with 18 - not run
 
 %% STEP 3 CONVERT From EDF to MAT
 %Extract_Eye_EDF_MO(excelLocation , dataLocation, ptID)

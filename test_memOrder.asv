@@ -27,13 +27,13 @@ loadEyeData(obj);
 %% Fix channel names
 fixChNames(obj);
 
-%% Identify bad channels
+%% Identify bad channelscl
 identifyBads(obj);
 
 %% Bipolar reference
 bipolarReference(obj);
 
-%% Filter
+%% High pass filter
 dataFilter(obj,lfreq);
 
 %% Identify TTLs
@@ -55,7 +55,7 @@ calculateZscore(obj);
 % All subsequent functions are optional.
 
 %% Plot LFPs for each task
-plotPhases(obj);
+%plotPhases(obj);
 
 %% Average spectrogram
 averageSpectrogram(obj);

@@ -25,7 +25,7 @@ classdef memOrder < handle
 
             %% Set the directories
             behavDir = append(folderDir,'Behavioral_Data\Raw\');
-            eyeDir = append(folderDir,'Eye-tracking\Raw\');
+            eyeDir = append(folderDir,'Eye-tracking\Processed\eyeDATA\cleaned_eyeDATA\');
             nwbDir = append(folderDir,'NWBProcessing\NWB_Data\');
 
             %% Determine file IDs
@@ -36,7 +36,17 @@ classdef memOrder < handle
             %% Grab file names
             nwb_names = fileIDs.File;
             behav_names = fileIDs.Behav;
-            eye_names = fileIDs.Eye;
+
+            %% Grab eye file
+            eye_names = dir(fullfile(eyeDir,'*.mat'));
+            eye_names = {eye_names.name}';
+
+            %% Grab eye to use
+            eyes = fileIDs{:,end};
+
+            %% Grab GAZE file
+            I = contains(eye_names,'GAZE');
+            eye_name = eye_names{I,1};
 
             %% Create logicals
             encode = logical(fileIDs.Encode);
@@ -47,19 +57,22 @@ classdef memOrder < handle
             if any(encode == 1)
                 obj.encode.nwb_fname = append(nwbDir,nwb_names{encode});
                 obj.encode.behave_fname = append(behavDir,behav_names{encode});
-                obj.encode.eye_fname = append(eyeDir,eye_names{encode});
+                obj.encode.eye_fname = append(eyeDir,eye_name);
+                obj.encode.eyeToUse = string(eyes{encode,1});
             end
 
             if any(sceneRecog == 1)
                 obj.sceneRecog.nwb_fname = append(nwbDir,nwb_names{sceneRecog});
                 obj.sceneRecog.behave_fname = append(behavDir,behav_names{sceneRecog});
-                obj.sceneRecog.eye_fname = append(eyeDir,eye_names{sceneRecog});
+                obj.sceneRecog.eye_fname = append(eyeDir,eye_name);
+                obj.sceneRecog.eyeToUse = string(eyes{sceneRecog,1});
             end
 
             if any(timeDiscrim == 1)
                 obj.timeDiscrim.nwb_fname = append(nwbDir,nwb_names{timeDiscrim});
                 obj.timeDiscrim.behave_fname = append(behavDir,behav_names{timeDiscrim});
-                obj.timeDiscrim.eye_fname = append(eyeDir,eye_names{timeDiscrim});
+                obj.timeDiscrim.eye_fname = append(eyeDir,eye_name);
+                obj.timeDiscrim.eyeToUse = string(eyes{timeDiscrim,1});
             end
 
             %% Find the non-empty structures for dynamic indexing
@@ -78,6 +91,9 @@ classdef memOrder < handle
 
             %% Add to object
             obj.validTasks = matchedNames;
+
+            %% Add valid phases
+            obj.validPhases = {"fixation";"presentation";"question"};
 
             %% Preallocate
             tmpNames = cell(length(matchedNames),1);
@@ -202,64 +218,54 @@ classdef memOrder < handle
                 obj.(matchedNames{ii,1}).correction_factor = obj.(matchedNames{ii,1}).LFPIdx(1,1) - 1;
                 obj.(matchedNames{ii,1}).LFPIdx = obj.(matchedNames{ii,1}).LFPIdx - obj.(matchedNames{ii,1}).correction_factor;
 
-                %% Find respMat table
-                % fieldNames = fieldnames(obj.(matchedNames{ii}).respMat);
-                % respMat_name = cell(length(fieldNames),1);
-                % for z = 1:length(fieldNames)
-                %     if contains(fieldNames{z,1},'respMat')
-                %         respMat_name{z,1} = fieldNames{z,1};
-                %     end
-                % end
+            end
+        end
 
-                %% Remove empty cells
-                % respMat_name = respMat_name(~cellfun('isempty',respMat_name));
+        %% Load the eye data
+        function loadEyeData(obj)
 
-                %% Convert response TTLs if they exist
-                % responseVals = [111 112 113 114 115 116];
-                % originalVals = [-3 -2 -1 1 2 3];
-                % for z = 1:length(obj.(matchedNames{ii,1}).respMat.(respMat_name{1,1}))
-                %     [~,idx] = ismember(obj.(matchedNames{ii,1}).respMat.(respMat_name{1,1})(z).respValue,originalVals);
-                %     if ~isempty(idx)
-                %         obj.(matchedNames{ii,1}).confidenceRating(z,1) = responseVals(idx);
-                %     else
-                %         obj.(matchedNames{ii,1}).confidenceRating(z,1) = NaN;
-                %     end
-                % end
+            %% Notes
+            % This function loads the processed eye folder and eye the
+            % eye data to the appropriate data field in the object.
 
-                %% Test
-                % count1 = 1;
-                % for a = 1:length(obj.(matchedNames{ii,1}).eventIDs)
-                %     if (obj.(matchedNames{ii,1}).eventIDs(a,1) < 111) || (isnan(obj.(matchedNames{ii,1}).eventIDs(a,1)))
-                %         continue
-                %     elseif (obj.(matchedNames{ii,1}).eventIDs(a,1) >= 111) && (obj.(matchedNames{ii,1}).eventIDs(a+1,1) >= 111)
-                %         num1 = obj.(matchedNames{ii,1}).eventIDs(a,1);
-                %         num2 = obj.(matchedNames{ii,1}).eventIDs(a+1,1);
-                %         confRating = obj.(matchedNames{ii,1}).confidenceRating(count1,1);
-                %         if num1 == confRating
-                %             obj.(matchedNames{ii,1}).eventIDs(a+1,1) = NaN;
-                %             count1 = count1 + 1;
-                %         elseif num2 == confRating
-                %             obj.(matchedNames{ii,1}).eventIDs(a,1) = NaN;
-                %             count1 = count1 + 1;
-                %         end
-                %     end
-                % end
+            %% Print
+            fprintf('Running function loadEyeData..\n')
 
-                %% Find NaNs if they exist
-                % I = isnan(obj.(matchedNames{ii,1}).eventIDs);
+            %% Loop over valid tasks
+            for ii = 1:length(obj.validTasks)
+
+                %% Set the task
+                task = obj.validTasks{ii,1};
+
+                %% Load the eye data
+                if ~exist('outInfo','var')
+                    outInfo = load(obj.(task).eye_fname);
+                    outInfo = outInfo.outInfo;
+                end
+
+                %% Rename Encoding
+                if isfield(outInfo,'encoding')
+                    outInfo.encode = outInfo.encoding;
+                    outInfo = rmfield(outInfo,'encoding');
+                end
+
+                %% Get the eye data if the same fields exist
+                if isfield(outInfo,task)
+                    obj.(task).eyeInfo = outInfo.(task);
+                end
 
             end
         end
 
-        %% Select channels
-        function selectChannels(obj,region,hemi)
+        %% Fix channel names
+        function fixChNames(obj)
 
             %% Notes
             % This function loops through valid tasks to find the channels
             % of interest for the analysis.
 
             %% Print
-            fprintf('Running function selectChannels..\n');
+            fprintf('Running function fixChNames..\n');
 
             %% Loop through tasks and select channels
             for ii = 1:length(obj.validTasks)
@@ -267,19 +273,25 @@ classdef memOrder < handle
                 %% Get the task
                 task = obj.validTasks{ii,1};
 
-                %% Find channels of interest
-                I = strcmp(obj.(task).chanID,region) & strcmp(obj.(task).chanHemi,hemi);
+                %% Ch short names
+                short_names = obj.(task).brTABLE{:,1};
 
-                %% Remove channels
-                obj.(task).LFP_data = obj.(task).LFP_data(I,:);
-                obj.(task).chanID = obj.(task).chanID(I,1);
-                obj.(task).chanHemi = obj.(task).chanHemi(I,1);
-                obj.(task).chanSname = obj.(task).chanSname(I,1);
-                obj.(task).wireID = obj.(task).wireID(I,1);
+                %% Loop to fix names
+                for jj = 1:length(short_names)
 
-                %% Modify channel names
-                for z = 1:length(obj.(task).chanID)
-                    obj.(task).chanIdx{z,1} = strcat(obj.(task).chanSname{z,1},'_',num2str(z));
+                    %% Grab the channels
+                    I = strcmp(short_names{jj,1},obj.(task).chanSname);
+                    tmpChNames = obj.(task).chanSname(I);
+
+                    %% Loop over individual channels
+                    for kk = length(tmpChNames):-1:1
+                        tmpChNames(kk,1) = append(tmpChNames(kk,1),num2str(kk));
+                    end
+
+                    %% Write over channel names
+                    obj.(task).chanSname(I) = tmpChNames;
+                    clear tmpChNames
+
                 end
             end
         end
@@ -302,8 +314,17 @@ classdef memOrder < handle
                 %% Get the task
                 task = obj.validTasks{ii,1};
 
+                %% Preallocate
+                AmpIdx = NaN(length(obj.(task).chanSname),1);
+                kurtVal = NaN(length(obj.(task).chanSname),1);
+                chMean = NaN(length(obj.(task).chanSname),1);
+                chStd = NaN(length(obj.(task).chanSname),1);
+                chUpper = NaN(length(obj.(task).chanSname),1);
+                chLower = NaN(length(obj.(task).chanSname),1);
+                prctThr = NaN(length(obj.(task).chanSname),1);
+
                 %% Loop through channels to identify bads
-                for jj = 1:length(obj.(task).chanIdx)
+                for jj = 1:length(obj.(task).chanSname)
 
                     %% Calculate mean and standard deviation
                     ch_mean = mean(obj.(task).LFP_data(jj,:));
@@ -313,24 +334,124 @@ classdef memOrder < handle
                     upper_th = ch_mean + 2*ch_std;
                     lower_th = ch_mean - 2*ch_std;
 
-                    %% Determine if a channel is bad by comparing to its thresholds
-                    if sum(obj.(task).LFP_data(jj,:) > upper_th | obj.(task).LFP_data(jj,:) < lower_th) > 0.2*length(obj.(task).LFP_data(jj,:))
-                        obj.(task).keepIdx(jj,1) = 0;
+                    %% Compare channel to its thresholds
+                    I = obj.(task).LFP_data(jj,:) >= upper_th | obj.(task).LFP_data(jj,:) <= lower_th;
+                    chMean(jj,1) = ch_mean;
+                    chStd(jj,1) = ch_std;
+                    chUpper(jj,1) = upper_th;
+                    chLower(jj,1) = lower_th;
+                    prctThr(jj,1) = sum(I)/length(I);
+                    if sum(I)/length(I) < 0.2 % 20% of total signal above or below the threshold
+                        AmpIdx(jj,1) = 0;
                     else
-                        obj.(task).keepIdx(jj,1) = 1;
+                        AmpIdx(jj,1) = 1;
+                    end
+
+                    %% Calculate kurtosis value
+                    kurtVal(jj,1) = kurtosis(obj.(task).LFP_data(jj,:));
+
+                    %% Clear variables
+                    clear ch_mean ch_std upper_th lower_th I
+
+                end
+
+                %% Find bad channels with kurtosis
+                kurtMAD = mad(kurtVal,1);
+                kurtMED = median(kurtVal);
+                kurtZ = ((kurtVal - kurtMED)./kurtMAD); % Z-scored kurtosis
+                I = kurtZ > 3 | kurtZ < -3;
+
+                %% Find bad channels identified by either method
+                AmpIdx = logical(AmpIdx);
+                keepIdx = NaN(length(AmpIdx),1);
+                for jj = 1:length(AmpIdx)
+                    if I(jj,1) == 1 || AmpIdx(jj,1) == 1
+                        keepIdx(jj,1) = 0;
+                    else
+                        keepIdx(jj,1) = 1;
                     end
                 end
 
+                %% Convert to table
+                obj.(task).thr_vals = table(chMean,chStd,chUpper,chLower,prctThr,kurtZ,'VariableNames',{'Channel Mean','Channel Std','Upper Thr','Lower Thr','Prct Thr','Z Kurt'});
+
                 %% Convert to logical
-                obj.(task).keepIdx = logical(obj.(task).keepIdx);
+                obj.(task).keepIdx = logical(keepIdx);
+
+                %% Clear variables
+                clear chMean chStd chUpper chLower prctThr AmpIdx kurtVal kurtMED kurtMAD kurtZ keepIdx I
 
                 %% Set bad channels to NaN
                 obj.(task).LFP_data(~obj.(task).keepIdx,:) = NaN;
             end
         end
 
-        %% High pass filter
-        function dataFilter(obj,lfreq)
+        %% Bipolar reference
+        function bipolarReference(obj)
+
+            %% Print
+            fprintf('Running function bipolarReference..\n');
+
+            %% Loop over tasks
+            for ii = 1:length(obj.validTasks)
+
+                %% Get the task
+                task = obj.validTasks{ii,1};
+
+                %% Get short channel names
+                names = obj.(task).brTABLE{:,1};
+
+                %% Loop for referencing
+                for jj = 1:length(names)
+
+                    %% Grab the data
+                    I = contains(obj.(task).chanSname,names{jj,1});
+                    tmpData = obj.(task).LFP_data(I,:);
+                    chanID = obj.(task).chanID(I,1);
+                    keepIdx = obj.(task).keepIdx(I,1);
+                    chanName = obj.(task).chanSname(I,1);
+
+                    %% Remove data based on keepIdx
+                    tmpData = tmpData(keepIdx,:);
+                    obj.(task).chanRegion{jj,1} = chanID(keepIdx,1);
+                    chanName = chanName(keepIdx,1);
+
+                    %% Do the bipolar referencing
+                    for kk = size(tmpData,1):-1:1
+                        if kk > 1
+                            refName = append(chanName{kk,1},'-',chanName{kk-1,1});
+                            obj.(task).referencedData{jj,1}(kk,:) = tmpData(kk,:) - tmpData(kk-1,:);
+                            obj.(task).referencedChName{jj,1}{kk,1} = refName;
+                            obj.(task).groupChName{jj,1}{kk,1} = refName;
+                            clear refName
+                        else
+                            refName = append(chanName{1,1},'-',chanName{end,1});
+                            obj.(task).referencedData{jj,1}(kk,:) = tmpData(1,:) - tmpData(end,:);
+                            obj.(task).referencedChName{jj,1}{kk,1} = refName;
+                            obj.(task).groupChName{jj,1}{kk,1} = refName;
+                            clear refName
+                        end
+                    end
+
+                    %% Keep unreferenced names
+                    obj.(task).usedChans{jj,1} = chanName;
+
+                    %% Clear
+                    clear I tmpData chanID keepIdx chanName;
+
+                end
+
+                %% Convert
+                obj.(task).chanRegion = vertcat(obj.(task).chanRegion{:});
+                obj.(task).referencedChName = vertcat(obj.(task).referencedChName{:});
+                obj.(task).referencedData = cell2mat(obj.(task).referencedData);
+                obj.(task).usedChans = vertcat(obj.(task).usedChans{:});
+
+            end
+        end
+
+        %% Filter
+        function dataFilter(obj,lfreq,hfreq)
 
             %% Notes
             % This function high-passes the LFP data for each valid task
@@ -345,75 +466,31 @@ classdef memOrder < handle
                 %% Get the task
                 task = obj.validTasks{ii,1};
 
-                %% Create filter parameters
-                order = 1024;
-                Wn = lfreq/(obj.(task).fs/2);
-                b = fir1(order,Wn,'high');
+                %% Create Butterworth filter parameters
+                n = 2;
+                if exist('hfreq','var')
+                    freqs = [lfreq hfreq]./(obj.(task).fs/2);
+                    %b = fir1(n,freqs,'bandpass');
+                    [b,a] = butter(n,freqs,'bandpass');
+                    obj.(task).hfreq = hfreq;
+                else
+                    freqs = lfreq./(obj.(task).fs/2);
+                    %b = fir1(n,freqs,'high');
+                    [b,a] = butter(n,freqs,'high');
+                end
 
                 %% Loop through the channels and filter if they are valid
-                for jj = 1:length(obj.(task).keepIdx)
+                for jj = 1:size(obj.(task).referencedData,1)
 
                     %% Filter channel if it is valid
                     if obj.(task).keepIdx(jj,1) == 1
-                        obj.(task).filteredData(jj,:) = filtfilt(b,1,obj.(task).LFP_data(jj,:)');
+                        obj.(task).filteredData(jj,:) = filtfilt(b,a,obj.(task).referencedData(jj,:)');
                     end
                 end
 
                 %% Add high pass frequency to the object
                 obj.(task).lfreq = lfreq;
-            end
-        end
-
-        %% Bipolar referencing
-        function bipolarReference(obj)
-
-            %% Notes
-            % This function loops through good channels for each valid task
-            % and performs bipolar referncing using good adjacent contacts.
-
-            %% Print
-            fprintf('Running function bipolarReference..\n');
-
-            %% Loop through valid tasks
-            for ii = 1:length(obj.validTasks)
-
-                %% Get the task
-                task = obj.validTasks{ii,1};
-
-                %% Grab the data associated with good channels
-                jj = 1;
-                temp = NaN(length(obj.(task).keepIdx),length(obj.(task).filteredData));
-                ch_name = cell(length(obj.(task).keepIdx),1);
-                while jj <= length(obj.(task).keepIdx)
-                    if obj.(task).keepIdx(jj,1) == 1
-                        temp(jj,:) = obj.(task).filteredData(jj,:);
-                        ch_name{jj,:} = append(obj.(task).chanSname{jj,1},num2str(jj));
-                        jj = jj + 1;
-                    else
-                        next_idx = find(obj.(task).keepIdx(jj+1,1) == 1,1,"first");
-                        if ~isempty(next_idx)
-                            jj = jj + next_idx;
-                            temp(jj,:) = obj.(task).filteredData(jj,:);
-                            ch_name{jj,1} = append(obj.(task).chanSname{jj,1},num2str(jj));
-                        end
-                    end
-                end
-
-                %% Find channels that are NaN
-                I = any(isnan(temp),2);
-                ch_name = ch_name(~I,1);
-                temp = temp(~I,:);
-
-                %% Do bipolar referencing
-                for jj = 1:length(ch_name)
-                    if jj < length(ch_name)
-                        obj.(task).referencedData(jj,:) =  temp(jj,:) - temp(jj+1,:);
-                        obj.(task).referencedChName{jj,:} = append(ch_name{jj},'-',ch_name{jj+1,1});
-                    elseif jj == length(ch_name)
-                        obj.(task).referencedData(jj,:) = temp(jj,:) - temp(1,:);
-                        obj.(task).referencedChName{jj,1} = append(ch_name{jj,1},'-',ch_name{1,1});
-                    end
-                end
+                
             end
         end
 
@@ -529,7 +606,7 @@ classdef memOrder < handle
                 task = obj.validTasks{ii,1};
 
                 %% Create anonymous function handle
-                extractSegments = @(s,e) obj.(task).referencedData(:,s:e-1);
+                extractSegments = @(s,e) obj.(task).filteredData(:,s:e-1);
 
                 %% Grab data segments
                 obj.(task).Data.fixation = arrayfun(@(i) extractSegments(obj.(task).Indices.crossOnIdx(i),obj.(task).Indices.crossOffIdx(i)), 1:length(obj.(task).boundary), 'UniformOutput', false )';
@@ -547,6 +624,7 @@ classdef memOrder < handle
             % This function calculates the average voltage of each channel
             % during the fixation phase and subtracts it from the voltage
             % for each channel during the presentation and question phases.
+            % This function also z-scores the data.
 
             %% Print
             fprintf('Running function baselineCorrection..\n');
@@ -575,6 +653,38 @@ classdef memOrder < handle
                     %% Subtract from entire epoch
                     obj.(task).Data.epoch{jj,1} = obj.(task).Data.epoch{jj,1} - ch_mean;
 
+                end
+            end
+        end
+
+        %% Calculate Z-score
+        function calculateZscore(obj)
+
+            %% Notes
+            % This function z-scores the data segments.
+
+            %% Print
+            fprintf('Running function calculateZscore..\n');
+
+            %% Loop over tasks
+            for ii = 1:length(obj.validTasks)
+
+                %% Get the task
+                task = obj.validTasks{ii,1};
+
+                %% Get field names
+                names = fieldnames(obj.(task).Data);
+
+                %% Loop 0ver names
+                for jj = 1:length(names)
+
+                    %% Loop over epochs
+                    for kk = 1:length(obj.(task).Data.(names{jj,1}))
+
+                        %% Normalize the data
+                        obj.(task).Data.(names{jj,1}){kk,1} = zscore(obj.(task).Data.(names{jj,1}){kk,1});
+
+                    end
                 end
             end
         end
@@ -644,6 +754,749 @@ classdef memOrder < handle
             end
         end
 
+        %% Average spectrogram
+        function averageSpectrogram(obj)
+
+            %% function averageSpectrogram(obj)
+            % This function creates an average spectrogram over all trials
+            % for the encoding task.
+
+            %% Print
+            fprintf('Running function averageSpectrogram..\n');
+
+            %% Get field names
+            names = fieldnames(obj);
+
+            %% See if patient performed encoding
+            if any(strcmp(names,'encode'))
+
+                %% If they did, do basic power comparisons
+                groupChName = obj.encode.brTABLE{:,1};
+
+                %% Get the eye to use
+                eye = obj.encode.eyeToUse;
+
+                %% Get the data associated with the eye
+                fields = fieldnames(obj.encode.eyeInfo);
+                I = contains(fields,eye,'IgnoreCase',true);
+                eyeField = fields(I);
+
+                %% Get the gaze data
+                GAZEcl = obj.encode.eyeInfo.(eyeField{1,1}).GAZEcl;
+
+                %% Parameters
+                nEpochs = length(GAZEcl);
+                nRegions = length(groupChName);
+
+                %% Loop over trials
+                for ii = 1:nEpochs % Epochs
+
+                    %% Get the eye link start time
+                    ELNKstartTime = obj.encode.eyeInfo.TTLinfo{ii,1}{2,5};
+
+                    %% Get NLX start time
+                    NLXstartTime = obj.encode.eyeInfo.TTLinfo{ii,1}{2,4};
+
+                    %% Find the appropriate fixation
+                    if istable(GAZEcl{ii,1}.fixations) % Had at least one fixation
+                        fixations = GAZEcl{ii,1}.fixations.starttime;
+                        [~,fixation] = min(abs(double(fixations) - double(ELNKstartTime)));
+                    else
+                        continue
+                    end
+
+                    %% Create NLX fixation time
+                    NLXfixation = double(floor((fixations(fixation,1) - ELNKstartTime)./2)) + NLXstartTime;
+                    NLXfixation = NLXfixation - obj.encode.correction_factor;
+
+                    %% Create start and stop indices
+                    fixation_start = NLXfixation - 25; % 50 ms before onset
+                    fixation_end = NLXfixation + 5*obj.encode.fs; % 5 sec after onset
+
+                    %% Get the data
+                    data = obj.encode.referencedData(:,fixation_start:fixation_end);
+
+                    %% Loop over electrodes
+                    for jj = 1:nRegions
+
+                        %% Names
+                        ch_names = contains(obj.encode.usedChans,groupChName{jj,1});
+                        nChan = sum(ch_names);
+
+                        %% Skip if no channels found
+                        if nChan == 0
+                            continue
+                        end
+
+                        %% Find the names in the data
+                        tmpData = data(ch_names,:);
+
+                        %% Calculate FFT power
+                        [fft_pow,fft_freq] = pspectrum(tmpData',obj.encode.fs);
+
+                        %% Calculate CWT power
+                        for kk = 1:nChan
+                            [cwt_pow(:,:,kk),cwt_freq] = cwt(tmpData(kk,:),obj.encode.fs);
+                        end
+
+                        %% Calculate average power
+                        fft_pow = mean(fft_pow,2);
+                        cwt_pow = mean(abs(cwt_pow),3);
+
+                        %% Add to object
+                        obj.encode.PowerAnalysis.FFT.frequency{ii,1} = fft_freq;
+                        obj.encode.PowerAnalysis.FFT.power{ii,1}{jj,1} = fft_pow;
+
+                        obj.encode.PowerAnalysis.CWT.frequency{ii,1} = cwt_freq;
+                        obj.encode.PowerAnalysis.CWT.power{ii,1}{jj,1} = cwt_pow;
+
+                        %% Calculate average power in canonical frequency bands
+                        low_band = [0.5,4,8,13,30];
+                        high_band = [4,8,13,30,150]; 
+
+                        for kk = 1:length(low_band)
+                            J = fft_freq(:,1) >= low_band(1,kk) & fft_freq(:,1) <= high_band(1,kk);
+                            K = cwt_freq(:,1) >= low_band(1,kk) & cwt_freq(:,1) <= high_band(1,kk);
+
+                            if low_band(1,kk) == 0.5
+                                obj.encode.PowerAnalysis.FFT.Delta{ii,1}(jj,1) = mean(fft_pow(J));
+                                obj.encode.PowerAnalysis.CWT.Delta{ii,1}(jj,1) = mean(mean(cwt_pow(K,:)));
+                            elseif low_band(1,kk) == 4
+                                obj.encode.PowerAnalysis.FFT.Theta{ii,1}(jj,1) = mean(fft_pow(J));
+                                obj.encode.PowerAnalysis.CWT.Theta{ii,1}(jj,1) = mean(mean(cwt_pow(K,:)));
+                            elseif low_band(1,kk) == 8
+                                obj.encode.PowerAnalysis.FFT.Alpha{ii,1}(jj,1) = mean(fft_pow(J));
+                                obj.encode.PowerAnalysis.CWT.Alpha{ii,1}(jj,1) = mean(mean(cwt_pow(K,:)));
+                            elseif low_band(1,kk) == 13
+                                obj.encode.PowerAnalysis.FFT.Beta{ii,1}(jj,1) = mean(fft_pow(J));
+                                obj.encode.PowerAnalysis.CWT.Beta{ii,1}(jj,1) = mean(mean(cwt_pow(K,:)));
+                            elseif low_band(1,kk) == 30
+                                obj.encode.PowerAnalysis.FFT.Gamma{ii,1}(jj,1) = mean(fft_pow(J));
+                                obj.encode.PowerAnalysis.CWT.Gamma{ii,1}(jj,1) = mean(mean(cwt_pow(K,:)));
+                            end
+                            clear J K;
+                        end
+
+                        %% Clear some variables
+                        clear fft_pow cwt_pow fft_freq cwt_freq ch_names nChan;
+
+                    end
+                end
+            end
+        end
+
+        %% Plot spectrograms
+        function plotSpectrograms(obj)
+
+            %% Notes
+
+            %% Print
+            fprintf('Running function plotSpectrogram..\n');
+
+            %% Check if encoding
+            if isstruct(obj.encode)
+
+                %% Get power names
+                names = fieldnames(obj.encode.PowerAnalysis);
+
+                %% Reshape power data
+                for ii = 1:length(obj.encode.brTABLE{:,1})
+                    count = 1;
+                    for jj = 1:length(obj.encode.PowerAnalysis.FFT.power)
+                        if ~isempty(obj.encode.PowerAnalysis.FFT.power{jj,1})
+                            FFT_regions{ii,1}(count,:) = obj.encode.PowerAnalysis.FFT.power{jj,1}(ii,1);
+                            CWT_regions{ii,1}(count,:) = obj.encode.PowerAnalysis.CWT.power{jj,1}(ii,1);
+                            count = count + 1;
+                        end
+                    end
+                end
+
+                %% Create parameters
+                nRegions = length(CWT_regions);
+                nEpochs = length(CWT_regions{1,1});
+                
+                %% Reshape CWT
+                for ii = 1:nRegions
+                    for jj = 1:nEpochs
+                        tmpCWT(:,:,jj) = CWT_regions{ii,1}{jj,1};
+                        tmpFFT(:,1,jj) = FFT_regions{ii,1}{jj,1};
+                    end
+                    CWT{ii,1} = tmpCWT;
+                    FFT{ii,1} = tmpFFT;
+                    clear tmpCWT tmpFFT
+                end
+
+                %% Prep FFT data for plotting
+                for ii = 1:length(FFT)
+                    FFT{ii,1} = squeeze(FFT{ii,1});
+                    n = size(FFT{ii,1},2);
+                    FFT_STD = std(FFT{ii,1},0,2);
+                    FFT_CI{ii,1}(:,1) = mean(FFT{ii,1},2) - 1.96*(FFT_STD./sqrt(n));
+                    FFT_CI{ii,1}(:,2) = mean(FFT{ii,1},2) + 1.96*(FFT_STD./sqrt(n));
+                end
+
+                %% Prep CWT data for plotting
+                for ii = 1:length(CWT)
+                    CWT{ii,1} = squeeze(mean(CWT{ii,1},2));
+                    n = size(CWT{ii,1},2);
+                    CWT_STD = std(CWT{ii,1},0,2);
+                    CWT_CI{ii,1}(:,1) = mean(CWT{ii,1},2) - 1.96*(CWT_STD./sqrt(n));
+                    CWT_CI{ii,1}(:,2) = mean(CWT{ii,1},2) + 1.96*(CWT_STD./sqrt(n));
+                end
+
+                %% Test plot FFT section
+                figure
+                for ii = 1:length(FFT)
+                    %figure(ii)
+                    sig_power = 10*log(mean(FFT{ii,1},2));
+                    freq = obj.encode.PowerAnalysis.FFT.frequency{1,1};
+                    plot(freq,sig_power,'LineWidth',3)
+                    lCI = 10*log(FFT_CI{ii,1}(:,1));
+                    hCI = 10*log(FFT_CI{ii,1}(:,2));
+                    hold on
+                    fill([freq;flipud(freq)],[lCI;flipud(hCI)],'r','FaceAlpha',0.5,'EdgeColor','none')
+                end
+                fig = gca;
+                fig.XAxis.FontSize = 24;
+                fig.XAxis.FontWeight = 'bold';
+                fig.YAxis.FontSize = 24;
+                fig.YAxis.FontWeight = 'bold';
+                title('FFT Power','FontWeight','bold','FontSize',28);
+
+                %% Test plot CWT section
+                figure
+                for ii = 1:length(CWT)
+                    freq = obj.encode.PowerAnalysis.CWT.frequency{1,1};
+                    lCI = CWT_CI{ii,1}(:,1);
+                    hCI = CWT_CI{ii,1}(:,2);
+                    cwt_pow = mean(CWT{ii,1},2);
+                    plot(freq,cwt_pow,'LineWidth',3)
+                    hold on
+                    fill([freq;flipud(freq)],[lCI;flipud(hCI)],'r','FaceAlpha',0.5,'EdgeColor','none')
+                end
+                fig = gca;
+                fig.XAxis.FontSize = 24;
+                fig.XAxis.FontWeight = 'bold';
+                fig.YAxis.FontSize = 24;
+                fig.YAxis.FontWeight = 'bold';
+                title('CWT Power','FontWeight','bold','FontSize',28);
+
+            end
+        end
+
+        %% Plot frequency bands
+        function plotFrequencyBands(obj)
+
+            %% function plotFrequencyBands(obj)
+
+            %% Notes
+
+            %% Print
+            fprintf('Running function plotFrequencyBands..\n');
+
+            %% Check for encoding phase
+            if isstruct(obj.encode)
+
+                %% Names of power
+                pow_names = fieldnames(obj.encode.PowerAnalysis);
+
+                %% Name of bands
+                bands = ["Delta";"Theta";"Alpha";"Beta";"Gamma"];
+
+                %% Number of wires
+                %nWire = length(obj.encode.groupChName);
+
+                %% Number of epochs
+                nEpochs = length(obj.encode.boundary);
+
+                %% Loop over power technique
+                for ii = 1:length(pow_names)
+                    
+                    %% Loop over band power
+                    for jj = 1:length(bands)
+                        count = 1;
+
+                        %% Loop over epochs
+                        for kk = 1:nEpochs
+                            if ~isempty(obj.encode.PowerAnalysis.(pow_names{ii,1}).(bands(jj,1)){kk,1})
+                                tmp(count,:) = obj.encode.PowerAnalysis.(pow_names{ii,1}).(bands(jj,1)){kk,1};
+                                count = count + 1;
+                            end
+                        end
+
+                        %% Add to structure
+                        if strcmp(bands(jj,1),'Delta')
+                            Delta.(pow_names{ii,1}) = tmp;
+                        elseif strcmp(bands(jj,1),'Theta')
+                            Theta.(pow_names{ii,1}) = tmp;
+                        elseif strcmp(bands(jj,1),'Alpha')
+                            Alpha.(pow_names{ii,1}) = tmp;
+                        elseif strcmp(bands(jj,1),'Beta')
+                            Beta.(pow_names{ii,1}) = tmp;
+                        elseif strcmp(bands{jj,1},'Gamma')
+                            Gamma.(pow_names{ii,1}) = tmp;
+                        end
+                        clear tmp
+                    end
+                end
+
+                %% Plot FFT
+                figure
+                t = tiledlayout(5,1);
+                txt = title(t,'FFT Power');
+                txt.FontWeight = 'bold';
+                txt.FontSize = 32;
+                xlabel(t,'Channel','FontSize',20,'FontWeight','bold')
+                ylabel(t,'Power (dB)','FontSize',20,'FontWeight','bold')
+
+                % Tile 1 - Delta
+                ax1 = nexttile;
+                boxplot(Delta.FFT,'Symbol','')
+                title('Delta','FontSize',20)
+                set(gca,'XTickLabel',[])
+                ax1.YAxis.FontSize = 14;
+                ax1.YAxis.FontWeight = 'bold';
+
+                % Tile 2 - Theta
+                ax2 = nexttile;
+                boxplot(Theta.FFT,'Symbol','')
+                title('Theta','FontSize',20)
+                set(gca,'XTickLabel',[])
+                ax2.YAxis.FontSize = 14;
+                ax2.YAxis.FontWeight = 'bold';
+
+                % Tile 3 - Alpha
+                ax3 = nexttile;
+                boxplot(Alpha.FFT,'Symbol','')
+                title('Alpha','FontSize',20)
+                set(gca,'XTickLabel',[])
+                ax3.YAxis.FontSize = 14;
+                ax3.YAxis.FontWeight = 'bold';
+
+                % Tile 4 - Beta
+                ax4 = nexttile;
+                boxplot(Beta.FFT,'Symbol','')
+                title('Beta','FontSize',20)
+                set(gca,'XTickLabel',[])
+                ax4.YAxis.FontSize = 14;
+                ax4.YAxis.FontWeight = 'bold';
+
+                % Tile 5 - Gamma
+                ax5 = nexttile;
+                boxplot(Gamma.FFT,'Symbol','')
+                title('Gamma','FontSize',20)
+                set(gca,'XTickLabel',[])
+                xticklabels(obj.encode.brTABLE{:,1})
+                ax5.YAxis.FontSize = 14;
+                ax5.YAxis.FontWeight = 'bold';
+                ax5.XAxis.FontWeight = 'bold';
+                
+                %% Plot CWT
+                figure
+                t = tiledlayout(5,1);
+                txt = title(t,'CWT Power');
+                txt.FontWeight = 'bold';
+                txt.FontSize = 32;
+                xlabel(t,'Channel','FontSize',20,'FontWeight','bold')
+                ylabel(t,'Magnitude','FontSize',20,'FontWeight','bold')
+
+                % Tile 1 - Delta
+                ax1 = nexttile;
+                boxplot(Delta.CWT,'Symbol','')
+                title('Delta','FontSize',20)
+                set(gca,'XTickLabel',[])
+                ax1.YAxis.FontSize = 14;
+                ax1.YAxis.FontWeight = 'bold';
+
+                % Tile 2 - Theta
+                ax2 = nexttile;
+                boxplot(Theta.CWT,'Symbol','')
+                title('Theta','FontSize',20)
+                set(gca,'XTickLabel',[])
+                ax2.YAxis.FontSize = 14;
+                ax2.YAxis.FontWeight = 'bold';
+
+                % Tile 3 - Alpha
+                ax3 = nexttile;
+                boxplot(Alpha.CWT,'Symbol','')
+                title('Alpha','FontSize',20)
+                set(gca,'XTickLabel',[])
+                ax3.YAxis.FontSize = 14;
+                ax3.YAxis.FontWeight = 'bold';
+
+                % Tile 4 - Beta
+                ax4 = nexttile;
+                boxplot(Beta.CWT,'Symbol','')
+                title('Beta','FontSize',20)
+                set(gca,'XTickLabel',[])
+                ax4.YAxis.FontSize = 14;
+                ax4.YAxis.FontWeight = 'bold';
+
+                % Tile 5 - Gamma
+                ax5 = nexttile;
+                boxplot(Gamma.CWT,'Symbol','')
+                title('Gamma','FontSize',20)
+                set(gca,'XTickLabel',[])
+                xticklabels(obj.encode.brTABLE{:,1})
+                ax5.YAxis.FontSize = 14;
+                ax5.YAxis.FontWeight = 'bold';
+                ax5.XAxis.FontWeight = 'bold';
+
+            end
+        end
+
+        %% Examine theta relation to saccades
+        function thetaSaccade(obj,lfreq,hfreq)
+
+            %% function thetaSaccade(obj)
+
+            %% Notes
+
+            %% Print
+            fprintf('Running function thetaSaccade..\n');
+
+            %% Loop through valid tasks
+            for ii = 1:length(obj.validTasks)
+
+                %% Get the task
+                task = obj.validTasks{ii,1};
+
+                %% Temp channel names
+                tmpChRegion = obj.(task).chanRegion;
+                tmpChName = obj.(task).referencedChName;
+
+                %% Get the data
+                data = obj.(task).referencedData;
+                data = data';
+
+                %% Filter
+                order = 512;
+                if exist("hfreq","var")
+                   Wn = [lfreq hfreq]./((obj.(task).fs)./2);
+                   b = fir1(order,Wn,"bandpass");
+                   data = filtfilt(b,1,data);
+                else
+                    Wn = lfreq./((obj.(task).fs)./2);
+                    b = fir1(order,Wn,'high');
+                    data = filtfilt(b,1,data);
+                end
+
+                %% Set variables
+                nEpochs = length(obj.(task).boundary);
+                nWire = length(obj.(task).brTABLE{:,1});
+                eye = obj.(task).eyeToUse;
+
+                %% Get the data associated with the eye
+                fields = fieldnames(obj.(task).eyeInfo);
+                I = contains(fields,eye,'IgnoreCase',true);
+                eyeField = fields(I);
+
+                %% Get the GAZEcl data
+                GAZEcl = obj.(task).eyeInfo.(eyeField{1,1}).GAZEcl;
+                TTLinfo = obj.(task).eyeInfo.TTLinfo;
+
+                %% Loop over wires
+                for jj = 1:nWire
+
+                    %% Grab data associated with the wire
+                    J = contains(obj.(task).usedChans,obj.(task).brTABLE{jj,1});
+                    tmpWire = data(:,J);
+                    tmpNames{jj,1} = tmpChName(J,1);
+
+                    %% Get the number of channels per wire
+                    nChan = size(tmpWire,2);
+
+                    %% Loop over each channel
+                    for kk = 1:nChan
+
+                        %% Calculate CWT
+                        [tmpP,tmpF] = cwt(tmpWire(:,kk),obj.(task).fs);
+
+                        %% Hilbert transform
+                        phase = angle(hilbert(tmpWire(:,kk)));
+
+                        %% Loop over epochs
+                        for ll = 1:nEpochs
+
+                            %% Get the epoch start time
+                            ELNKstart = TTLinfo{ll,1}{2,5};
+                            NLXstart = TTLinfo{ll,1}{2,4};
+
+                            %% Loop over saccades
+                            for mm = 1:size(GAZEcl{ll,1}.saccades,1)
+
+                                %% Check if saccades exist
+                                if isfield(GAZEcl{ll,1},'saccades')
+
+                                    %% Find NLX saccade onset
+                                    if istable(GAZEcl{ll,1}.saccades)
+                                        onset = floor((double(GAZEcl{ll,1}.saccades{mm,6} - ELNKstart))./2) + NLXstart - obj.(task).correction_factor;
+                                    else
+                                        continue
+                                    end
+
+                                    %% Create start and stop times
+                                    startSaccade = onset - floor(obj.(task).fs/4); % 250 ms before onset
+                                    endSaccade = onset + floor(obj.(task).fs/2) - 1; % 500 ms after onset
+
+                                    %% Skip saccade if it starts before trial or goes beyond last saccade sample
+                                    if startSaccade < 1 || endSaccade > length(data)
+                                        saccadePhase{jj,1}{kk,1}{ll,1}(mm,1:endSaccade-startSaccade+1) = NaN;
+                                        saccadeCWT{jj,1}{kk,1}{ll,1} = NaN;
+                                        saccadeCWT{jj,1}{kk,1}{ll,2} = NaN;
+                                    else
+                                        saccadePhase{jj,1}{kk,1}{ll,1}(mm,1:endSaccade-startSaccade+1) = phase(startSaccade:endSaccade,1);
+                                        cwtSaccade = tmpP(:,startSaccade:endSaccade);
+                                        [M,K] = max(max(abs(cwtSaccade),[],2));
+                                        saccadeCWT{jj,1}{kk,1}{ll,1} = tmpF(K,1);
+                                        saccadeCWT{jj,1}{kk,1}{ll,2} = M;
+                                        clear M K
+                                    end
+                                end
+                            end % End saccades
+                        end % End epochs
+
+                        %% Clear
+                        clear tmpP tmpF phase
+
+                    end % End channels
+
+                    %% Clear
+                    clear J tmpWire nChan
+
+                end % End wires
+
+                %% Loop for mean
+                %clear tmp;
+                for x = 1:length(saccadePhase)
+                    for y = 1:length(saccadePhase{x,1})
+                        for z = 1:length(saccadePhase{x,1}{y,1})
+                            if ~isempty(saccadePhase{x,1}{y,1}{z,1})
+                               tmp{x,1}{y,1}(z,:) = mean(saccadePhase{x,1}{y,1}{z,1},1,'omitnan');
+                            end
+                        end
+                    end
+                end
+
+                %% Set counter
+                count = 1;
+
+                %% Loop to plot all saccades
+                for x = 1:length(saccadePhase)
+                    for y = 1:length(saccadePhase{x,1})
+                        figure('Position',[1,49,2560,1315])
+                        tl = tiledlayout(10,1);
+                        t = tmpNames{x,1}{y,1};
+                        ch_name{count,1} = t;
+                        txt = title(tl,t);
+                        txt.FontWeight = 'bold';
+                        txt.FontSize = 32;
+                        xlabel(tl,'Sample Number','FontSize',20,'FontWeight','bold');
+
+                        % Tile 1
+                        nt = nexttile([6 1]);
+                        saccade = cell2mat(saccadePhase{x,1}{y,1});
+                        I = any(isnan(saccade),2);
+                        saccade = saccade(~I,:);
+                        imagesc(-125:1:249,1:1:size(saccade,1),saccade)
+                        xticks([]);
+                        ylabel('Saccade Number','FontSize',20,'FontWeight','bold')
+                        nt.FontWeight = 'bold';
+                        nt.FontSize = 20;
+
+                        % Find number of saccades in 1/4th of task %
+                        nSaccade = floor(size(saccade,1)/4);
+
+                        % Loop to calculate ITPC per quarter %
+                        for kk = 1:4
+                            sacStart = (kk-1) * nSaccade + 1;
+                            sacEnd = sacStart + nSaccade - 1;
+                            for ll = 1:size(saccade,2)
+                                itpc(kk,ll) = abs(mean(exp(1i.*saccade(sacStart:sacEnd,ll))));
+                            end
+                        end
+
+                        % Calculate max ITPC
+                        segMax = max(itpc,[],2);
+                        itpcMax = max(segMax);
+
+                        % Tile 2
+                        nt = nexttile;
+                        if segMax(1,1) >= 0.15
+                            plot(itpc(1,:),'LineWidth',3,'Color','red')
+                            first(count,1) = 1;
+                        else
+                            plot(itpc(1,:),'LineWidth',3,'Color','blue')
+                            first(count,1) = 0;
+                        end
+                        ylabel('ITPC','FontSize',20,'FontWeight','bold');
+                        xticks([])
+                        xlim([1 size(saccade,2)]);
+                        ylim([0 1.1*itpcMax])
+                        nt.FontWeight = 'bold';
+                        nt.FontSize = 20;
+
+                        % Tile 3
+                        nt = nexttile;
+                        if segMax(2,1) >= 0.15
+                            plot(itpc(2,:),'LineWidth',3,'Color','red')
+                            second(count,1) = 1;
+                        else
+                            plot(itpc(2,:),'LineWidth',3,'Color','blue')
+                            second(count,1) = 0;
+                        end
+                        ylabel('ITPC','FontSize',20,'FontWeight','bold');
+                        xticks([])
+                        xlim([1 size(saccade,2)]);
+                        ylim([0 1.1*itpcMax])
+                        nt.FontSize = 20;
+                        nt.FontWeight = 'bold';
+
+                        % Tile 4
+                        nt = nexttile;
+                        if segMax(3,1) >= 0.15
+                            plot(itpc(3,:),'LineWidth',3,'Color','red')
+                            third(count,1) = 1;
+                        else
+                            plot(itpc(3,:),'LineWidth',3,'Color','blue')
+                            third(count,1) = 0;
+                        end
+                        ylabel('ITPC','FontSize',20,'FontWeight','bold');
+                        xticks([])
+                        xlim([1 size(saccade,2)]);
+                        ylim([0 1.1*itpcMax])
+                        nt.FontSize = 20;
+                        nt.FontWeight = 'bold';
+
+                        % Tile 5
+                        nt = nexttile;
+                        if segMax(4,1) >= 0.15
+                            plot(-125:1:249,itpc(4,:),'LineWidth',3,'Color','red')
+                            fourth(count,1) = 1;
+                        else
+                            plot(-125:1:249,itpc(4,:),'LineWidth',3,'Color','blue')
+                            fourth(count,1) = 0;
+                        end
+                        ylabel('ITPC','FontSize',20,'FontWeight','bold');
+                        %xticks([])
+                        xlim([-125 249]);
+                        ylim([0 1.1*itpcMax])
+                        nt.FontSize = 20;
+                        nt.FontWeight = 'bold';
+
+                        % Channel location
+                        ch_longName{count,1} = obj.(task).chanRegion{count,1};
+
+                        clear I saccade txt sacStart sacEnd itpc;
+                        count = count + 1;
+
+                        %% Save figure
+                        filename = append('C:\Users\Kevin_Tyner\Desktop\Theta Figures\Theta Quarters MW30 Correct Referencing\',t,'.jpg');
+                        saveas(gcf,filename)
+                        close(gcf)
+                        clear t
+
+                    end
+                end
+
+                %% Create and save table
+                patient_thresholds = table(ch_name,ch_longName,first,second,third,fourth);
+                writetable(patient_thresholds,'C:\Users\Kevin_Tyner\Desktop\mw30_thresholds.xlsx');
+
+                %% Test plots
+                figure
+                fig = gca;
+                x = cell2mat(saccadePhase{8,1}{8,1});
+                I = any(isnan(x),2);
+                x = x(~I,:);
+                imagesc(x)
+                xlabel('Saccade Sample','FontSize',20);
+                ylabel('Saccade Number','FontSize',20);
+                title('RGMH9-RGMH10')
+                fig.FontSize = 40;
+                fig.FontName = 'Arial';
+                fig.FontWeight = 'bold';
+
+                figure
+                fig = gca;
+                imagesc(tmp{8,1}{8,1})
+                xlabel('Saccade Sample','FontSize',20);
+                ylabel('Epoch Number','FontSize',20);
+                title('RGMH9-RGMH10')
+                fig.FontSize = 40;
+                fig.FontName = 'Arial';
+                fig.FontWeight = 'bold';
+
+                % Calculate ITPC and plot %
+                for z = 1:size(x,2)
+                    itpc(1,z) = abs(mean(exp(1i.*x(:,z))));
+                end
+                figure
+                fig = gca;
+                plot(itpc,'LineWidth',3)
+                grid on
+                xlabel('Saccade Sample','FontSize',20);
+                ylabel('ITPC','FontSize',20);
+                title('RGMH9-RGMH10')
+                fig.FontSize = 40;
+                fig.FontName = 'Arial';
+                fig.FontWeight = 'bold';
+                
+                %%
+                x = 0;
+
+                %% Plot individual epochs
+                samples = -125:1:250-1;
+                epoch_num = 1:1:3888;
+                for z = 1:size(PhaseData,3)
+                    figure
+                    fig = gca;
+                    imagesc(samples,epoch_num,cell2mat(PhaseData(:,:,z)));
+                    %imagesc(samples,epoch_num,PhaseData(:,:,z));
+                    t = obj.(task).uniqueChName{z,1};
+                    t = append(t,' task ',task);
+                    xlabel('Saccade sample','FontSize',20);
+                    ylabel('Epoch Number','FontSize',20);
+                    title(t)
+                    fig.FontSize = 40;
+                    fig.FontName = 'Arial';
+                    fig.FontWeight = 'bold';
+                end
+
+                %% Calculate ITPC
+                % Need to fix this section
+                for jj = 1:size(PhaseData,3)
+                    tmp = PhaseData(:,:,jj);
+                    itpc(1,:,jj) = abs(mean(exp(1i * tmp), 1));
+                end
+
+                %% Plot
+                samples = -125:1:250-1;
+                epoch_num = 1:1:nEpochs;
+                for z = 1:size(PhaseData,3)
+                    figure
+                    fig = gca;
+                    imagesc(samples,epoch_num,PhaseData(:,:,z));
+                    t = obj.(task).uniqueChName{z,1};
+                    t = append(t,' task ',task);
+                    xlabel('Saccade sample','FontSize',20);
+                    ylabel('Epoch Number','FontSize',20);
+                    title(t)
+                    fig.FontSize = 40;
+                    fig.FontName = 'Arial';
+                    fig.FontWeight = 'bold';
+                end
+
+                %% Fit to normal distribution
+                x = PhaseData(:,:,14); % good
+                y = PhaseData(:,:,8); % medium
+                z = PhaseData(:,:,5); % none
+                pd = fitdist(mean(z,1)','Normal');
+                cdfVal = cdf(pd,mean(z,1));
+
+            end
+        end
+
         %% Compute Power
         function computePower(obj,freq)
 
@@ -655,9 +1508,6 @@ classdef memOrder < handle
 
             %% Print
             fprintf('Running function computePower..\n');
-
-            %% Set valid phases
-            obj.validPhases = {"fixation";"presentation";"question"};
 
             %% Loop through valid tasks
             for ii = 1:length(obj.validTasks)

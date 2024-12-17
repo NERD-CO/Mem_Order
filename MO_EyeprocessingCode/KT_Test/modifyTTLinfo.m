@@ -76,10 +76,19 @@ function [TTLinfo] = modifyTTLinfo(TTLinfo,ptID,moSessionMatFname,respMat)
     clipOffIdx = LFPidx(eventIDs == 2);
     questionIdx = LFPidx(eventIDs == 3);
 
+    %% Remove select trials
+    if strcmp(ptID,'MW27') && contains(moSessionMatFname,'timeDiscrim')
+        questionIdx(23) = [];
+    end
+
     %% Get response times and convert to samples
     responseIdx = NaN(length(respMat),1);
     for ii = 1:length(respMat)
-        responseIdx(ii,1) = respMat(ii).respTime - respMat(ii).QuesStart;
+        if ~isempty(respMat(ii).respTime)
+            responseIdx(ii,1) = respMat(ii).respTime - respMat(ii).QuesStart;
+        else
+            continue
+        end
     end
     responseIdx = questionIdx + floor(responseIdx .* 500); % 500 Hz sampling rate
 
