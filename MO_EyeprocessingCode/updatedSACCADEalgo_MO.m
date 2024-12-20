@@ -17,7 +17,7 @@ matFileL1 = dir('*.mat');
 matFileL2 = {matFileL1.name};
 matFileL3 = matFileL2{contains(matFileL2,'clgaze')};
 
-checkSACCADE_STROOP(matFileL3)
+checkSACCADE_MO(matFileL3)
 
 
 end

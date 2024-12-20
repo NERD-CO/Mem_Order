@@ -13,6 +13,23 @@ for ssii = 1:length(subDIRall3)
 end
 
 %%
-mainLOC = 'E:\Dropbox\StroopEMUTest_2024';
-ptID = 'MW40';
-updatedSACCADEalgo_STROOP(mainLOC, ptID)
+mainLOC = 'Z:\Tyner_K_Projects\MEM_ORDER\DataFolder';
+ptID = 'MW18';
+updatedSACCADEalgo_MO(mainLOC, ptID)
+
+
+%%
+cd(mainLOC)
+foldDIR = dir();
+foldDIR2 = {foldDIR.name};
+subLIST = foldDIR2(~ismember(foldDIR2,{'.','..'}));
+subLIST = subLIST(2:end);
+
+for subII = 1:length(subLIST)
+
+    ptID = subLIST{subII};
+    updatedSACCADEalgo_MO(mainLOC, ptID)
+    disp([ptID , ' done'])
+
+end
+

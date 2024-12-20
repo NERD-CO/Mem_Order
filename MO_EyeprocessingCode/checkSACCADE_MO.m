@@ -2,23 +2,29 @@ function [] = checkSACCADE_MO(gazeFILEn)
 
 load(gazeFILEn, 'outInfo')
 
-eyeIDs = {'leftEYE','rightEYE'};
+sessTYPE = fieldnames(outInfo);
 
-for eeii = 1:length(eyeIDs) % Loop through var(i) fields
+for seii = 1:length(sessTYPE) % Loop through var(i) fields
 
-    % CLEAN up duplicates
-    outInfo.(eyeIDs{eeii}).GAZEcl =...
-        cleanUPdupSacs(outInfo.(eyeIDs{eeii}).GAZEcl);
+    eyeIDs = {'leftEYE','rightEYE'};
 
-    % CHECK SACCADES
-    % 1. Sanity plot loop
-    [newSACCADEcol] = plotSACCADEoverlay(outInfo.(eyeIDs{eeii}).GAZEcl,...
-        outInfo.(eyeIDs{eeii}).gaze_Scr_time,...
-        outInfo.(eyeIDs{eeii}).gaze_Scr);
+    for eeii = 1:length(eyeIDs)
 
-    outInfo.(eyeIDs{eeii}).GAZEcl2 = transpose(newSACCADEcol);
+        % CLEAN up duplicates
+        outInfo.(sessTYPE{seii}).(eyeIDs{eeii}).GAZEcl =...
+            cleanUPdupSacs(outInfo.(sessTYPE{seii}).(eyeIDs{eeii}).GAZEcl);
 
-    disp(['Eye ', num2str(eeii) ,' done'])
+        % CHECK SACCADES
+        % 1. Sanity plot loop
+        [newSACCADEcol] = plotSACCADEoverlay(outInfo.(sessTYPE{seii}).(eyeIDs{eeii}).GAZEcl,...
+            outInfo.(sessTYPE{seii}).(eyeIDs{eeii}).gaze_Scr_time,...
+            outInfo.(sessTYPE{seii}).(eyeIDs{eeii}).gaze_Scr);
+
+        outInfo.(sessTYPE{seii}).(eyeIDs{eeii}).GAZEcl2 = transpose(newSACCADEcol);
+
+        disp(['Eye ', num2str(eeii) ,' done'])
+    end
+    disp(['Sess ', num2str(seii) ,' done'])
 end % VARIANT field loop
 
 save(gazeFILEn, 'outInfo')
